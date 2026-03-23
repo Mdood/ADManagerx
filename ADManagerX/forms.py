@@ -216,3 +216,60 @@ class LdapSettingsForm(forms.ModelForm):
     def _domain_to_base_dn(domain: str) -> str:
         parts = [p.strip() for p in domain.split(".") if p.strip()]
         return ",".join([f"DC={p}" for p in parts])
+
+class CreateUserForm(forms.Form):
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    first_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    last_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    email = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(attrs={"class": "form-control"})
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": "form-control"})
+    )
+    phone = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    department = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3})
+    )
+    target_ou_dn = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+
+    must_change_password = forms.BooleanField(
+        required=False,
+        label="Must change password at first logon",
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+    user_cannot_change_password = forms.BooleanField(
+        required=False,
+        label="User cannot change password",
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+    password_never_expires = forms.BooleanField(
+        required=False,
+        label="Password never expires",
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+    account_disabled = forms.BooleanField(
+        required=False,
+        label="Account is disabled",
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )

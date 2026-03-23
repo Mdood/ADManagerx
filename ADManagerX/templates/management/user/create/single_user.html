@@ -24,48 +24,92 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">First Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" name="first_name" placeholder="Enter first name" required>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="first_name"
+                  placeholder="Enter first name"
+                  value="{{ request.POST.first_name|default:'' }}"
+                  required
+                >
               </div>
 
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Last Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" name="last_name" placeholder="Enter last name" required>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="last_name"
+                  placeholder="Enter last name"
+                  value="{{ request.POST.last_name|default:'' }}"
+                  required
+                >
               </div>
 
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Username <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" name="username" placeholder="Enter username" required>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="username"
+                  placeholder="Enter username"
+                  value="{{ request.POST.username|default:'' }}"
+                  required
+                >
               </div>
 
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Email <span class="text-danger">*</span></label>
-                <input type="email" class="form-control" name="email" placeholder="Enter email address" required>
+                <input
+                  type="email"
+                  class="form-control"
+                  name="email"
+                  placeholder="Enter email address"
+                  value="{{ request.POST.email|default:'' }}"
+                  required
+                >
               </div>
 
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Phone</label>
-                <input type="text" class="form-control" name="phone" placeholder="Enter phone number">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="phone"
+                  placeholder="Enter phone number"
+                  value="{{ request.POST.phone|default:'' }}"
+                >
               </div>
 
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Department</label>
-                <input type="text" class="form-control" name="department" placeholder="Enter department">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="department"
+                  placeholder="Enter department"
+                  value="{{ request.POST.department|default:'' }}"
+                >
               </div>
 
               <div class="col-md-12 mb-3">
                 <label class="form-label font-weight-bold">Description</label>
-                <textarea class="form-control" name="description" rows="2" placeholder="Short description or notes"></textarea>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="2"
+                  placeholder="Short description or notes"
+                >{{ request.POST.description|default:'' }}</textarea>
               </div>
 
-              <!-- NEW: Target OU -->
               <div class="col-md-12 mb-3">
                 <label class="form-label font-weight-bold">Target OU <span class="text-danger">*</span></label>
 
                 {% if ous %}
                   <select name="target_ou_dn" class="form-control" required>
-                    <option value="" disabled selected>-- Select OU --</option>
+                    <option value="" disabled {% if not request.POST.target_ou_dn %}selected{% endif %}>-- Select OU --</option>
                     {% for ou in ous %}
-                      <option value="{{ ou.dn }}">
+                      <option value="{{ ou.dn }}" {% if request.POST.target_ou_dn == ou.dn %}selected{% endif %}>
                         {{ ou.ou }} — {{ ou.dn }}
                       </option>
                     {% endfor %}
@@ -77,14 +121,13 @@
                 {% endif %}
               </div>
 
-              <!-- NEW: Groups multi-select -->
               <div class="col-md-12 mb-3">
                 <label class="form-label font-weight-bold">Assign Groups</label>
 
                 {% if groups %}
                   <select name="group_dns" class="form-control" multiple size="10">
                     {% for g in groups %}
-                      <option value="{{ g.dn }}">
+                      <option value="{{ g.dn }}" {% if g.dn in request.POST.getlist.group_dns %}selected{% endif %}>
                         {{ g.name }}{% if g.description %} — {{ g.description }}{% endif %}
                       </option>
                     {% endfor %}
@@ -99,12 +142,95 @@
 
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Password <span class="text-danger">*</span></label>
-                <input type="password" class="form-control" name="password" placeholder="Enter password" required>
+                <input
+                  type="password"
+                  class="form-control"
+                  name="password"
+                  placeholder="Enter password"
+                  required
+                >
               </div>
 
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Confirm Password <span class="text-danger">*</span></label>
-                <input type="password" class="form-control" name="confirm_password" placeholder="Confirm password" required>
+                <input
+                  type="password"
+                  class="form-control"
+                  name="confirm_password"
+                  placeholder="Confirm password"
+                  required
+                >
+              </div>
+
+              <div class="col-md-12 mb-3">
+                <label class="form-label font-weight-bold d-block mb-2">Account Options</label>
+
+                <div class="border rounded p-3 bg-light">
+                  <div class="row">
+                    <div class="col-md-6 mb-2">
+                      <div class="custom-control custom-checkbox">
+                        <input
+                          class="custom-control-input"
+                          type="checkbox"
+                          name="must_change_password"
+                          id="must_change_password"
+                          {% if request.POST.must_change_password %}checked{% endif %}
+                        >
+                        <label class="custom-control-label" for="must_change_password">
+                          Must change password at first logon
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                      <div class="custom-control custom-checkbox">
+                        <input
+                          class="custom-control-input"
+                          type="checkbox"
+                          name="user_cannot_change_password"
+                          id="user_cannot_change_password"
+                          {% if request.POST.user_cannot_change_password %}checked{% endif %}
+                        >
+                        <label class="custom-control-label" for="user_cannot_change_password">
+                          User cannot change password
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                      <div class="custom-control custom-checkbox">
+                        <input
+                          class="custom-control-input"
+                          type="checkbox"
+                          name="password_never_expires"
+                          id="password_never_expires"
+                          {% if request.POST.password_never_expires %}checked{% endif %}
+                        >
+                        <label class="custom-control-label" for="password_never_expires">
+                          Password never expires
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                      <div class="custom-control custom-checkbox">
+                        <input
+                          class="custom-control-input"
+                          type="checkbox"
+                          name="account_disabled"
+                          id="account_disabled"
+                          {% if request.POST.account_disabled %}checked{% endif %}
+                        >
+                        <label class="custom-control-label" for="account_disabled">
+                          Account is disabled
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <small class="text-muted d-block mt-2">
+                  Select the account behavior you want when the user is created.
+                </small>
               </div>
             </div>
 

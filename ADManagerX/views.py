@@ -1,3 +1,5 @@
+from urllib import request
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect
@@ -313,6 +315,10 @@ def create_single_user(request):
         description  = request.POST.get("description", "").strip()
         password     = request.POST.get("password", "")
         confirm_pass = request.POST.get("confirm_password", "")
+        must_change_password = bool(request.POST.get("must_change_password"))
+        user_cannot_change_password = bool(request.POST.get("user_cannot_change_password"))
+        password_never_expires = bool(request.POST.get("password_never_expires"))
+        account_disabled = bool(request.POST.get("account_disabled"))
 
         # NEW: selected OU + Groups (must match template input names)
         target_ou_dn = request.POST.get("target_ou_dn", "").strip()
@@ -346,16 +352,20 @@ def create_single_user(request):
         # Create AD user in chosen OU and add to selected groups
         try:
             create_user(
-                username=username,
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                password=password,
-                phone=phone,
-                department=department,
-                description=description,
-                target_ou_dn=target_ou_dn or None,   # requires create_user() updated signature
-                group_dns=group_dns or None          # requires create_user() to add group membership
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            password=password,
+            phone=phone,
+            department=department,
+            description=description,
+            target_ou_dn=target_ou_dn or None,
+            group_dns=group_dns or None,
+            must_change_password=must_change_password,
+            user_cannot_change_password=user_cannot_change_password,
+            password_never_expires=password_never_expires,
+            account_disabled=account_disabled,
             )
             messages.success(request, f"User created in AD: {username}")
         except ADServiceError as e:
