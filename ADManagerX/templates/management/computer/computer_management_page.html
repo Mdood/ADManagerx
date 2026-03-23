@@ -1,0 +1,62 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block title %}Computer Management{% endblock %}
+
+{% block content %}
+    <div class="content-wrapper mt-5 pt-5 bg-white w-auto h-auto ">
+        <h4 class="mb-3">Computer Management</h4>
+        <p class="text-muted">Choose an action below to manage computers</p>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm border">
+                    <div class="card-body">
+                        <h5 class="card-title">Create Computer</h5>
+                        <p class="card-text">Add a new computer to the system.</p>
+                        <a href="{% url 'create_single_computer' %}" class="btn btn-primary btn-sm">Single Computer</a>
+                        <a href="{% url 'create_bulk_computers' %}" class="btn btn-outline-primary btn-sm">Bulk Computers</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                  <div class="card shadow-sm border">
+                    <div class="card-body">
+                        <h5 class="card-title">Update Computer</h5>
+                        <p class="card-text">Modify existing computer details.</p>
+                      <a href="{% url 'update_single_computer' %}" class="btn btn-warning btn-sm">Single Computer</a>
+                      <a href="{% url 'update_bulk_computers' %}" class="btn btn-outline-warning btn-sm">Bulk Computers</a>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                  <div class="card shadow-sm border">
+                    <div class="card-body">
+                        <h5 class="card-title">Lock Computer</h5>
+                        <p class="card-text">Lock accounts for security or policy enforcement.</p>
+                        <a href="{% url 'lock_single_computer' %}" class="btn btn-dark btn-sm">Single Computer</a>
+                      <a href="{% url 'lock_bulk_computers' %}" class="btn btn-outline-dark btn-sm">Bulk Computers</a>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm border">
+                        <div class="card-body">
+                            <h5 class="card-title">Unlock Computer</h5>
+                            <p class="card-text">Restore access for locked computers.</p>
+                            <a href="{% url 'unlock_single_computer' %}" class="btn btn-success btn-sm">Single Computer</a>
+                            <a href="{% url 'unlock_bulk_computers' %}" class="btn btn-outline-success btn-sm">Bulk Computers</a>
+                    </div>
+                </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm border">
+                    <div class="card-body">
+                        <h5 class="card-title">Move Computers</h5>
+                        <p class="card-text">Transfer computer accounts to a different OU.</p>
+                        <a href="{% url 'move_single_computer' %}" class="btn btn-secondary btn-sm">Single Computer</a>
+                      <a href="{% url 'move_bulk_computers' %}" class="btn btn-outline-secondary btn-sm">Bulk Computers</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

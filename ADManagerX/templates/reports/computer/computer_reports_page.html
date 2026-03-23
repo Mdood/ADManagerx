@@ -1,0 +1,56 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block title %}Computer Reports{% endblock %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-5 bg-white w-auto h-auto">
+    <h4 class="mb-3">Computer Reports</h4>
+    <p class="text-muted">Select a report to view detailed computer information.</p>
+
+    <!-- General Reports -->
+    <h5 class="mt-4">General Reports</h5>
+    <div class="row">
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">All Computers</a></div>
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">OS Based Report</a></div>
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Workstation Computers</a></div>
+    </div>
+
+    <!-- Account Status Reports -->
+    <h5 class="mt-4">Account Status Reports</h5>
+    <div class="row">
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Inactive Computers</a></div>
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Active Computers</a></div>
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Disabled Computers</a></div>
+    </div>
+
+    <!-- Bitlocker Reports -->
+    <h5 class="mt-4">Bitlocker Reports</h5>
+    <div class="row">
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-dark w-100">Bitlocker Recovery Keys</a></div>
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-dark w-100">Bitlocker Enabled Computers</a></div>
+    </div>
+
+    <hr class="my-4">
+    <h5>All Computers (First 200)</h5>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>sAMAccountName</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in computers %}
+                    <tr>
+                        <td>{{ c.name }}</td>
+                        <td>{{ c.sam }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="2" class="text-muted">No data available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

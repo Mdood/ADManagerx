@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-5 bg-white">
+  <h4 class="mb-3">OU Management</h4>
+  <p class="text-muted">Choose an action below to manage ou</p>
+  <div class="row">
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm border">
+        <div class="card-body">
+          <h5 class="card-title">Create OU</h5>
+          <p class="card-text">Add a new OU account to the system.</p>
+          <a href="{% url 'create_single_ou' %}" class="btn btn-primary btn-sm">Single OU</a>
+          <a href="{% url 'create_bulk_ous' %}" class="btn btn-outline-primary btn-sm">Bulk OUs</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm border">
+        <div class="card-body">
+          <h5 class="card-title">Update OU</h5>
+          <p class="card-text">Modify existing OU details.</p>
+          <a href="{% url 'update_single_ou' %}" class="btn btn-warning btn-sm">Single OU</a>
+          <a href="{% url 'update_bulk_ous' %}" class="btn btn-outline-warning btn-sm">Bulk OUs</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm border">
+        <div class="card-body">
+          <h5 class="card-title">Move OUs</h5>
+          <p class="card-text">Transfer OU accounts to a different OU.</p>
+          <a href="{% url 'move_ou' %}" class="btn btn-secondary btn-sm">Single OU</a>
+          <a href="{% url 'move_bulk_ous' %}" class="btn btn-outline-secondary btn-sm">Bulk OUs</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm border">
+        <div class="card-body">
+          <h5 class="card-title">Delete OU</h5>
+          <p class="card-text">Remove an OU from the system. <span class="text-danger"></span></p>
+          <a href="{% url 'delete_ou' %}" class="btn bg-danger text-white btn-sm">Single OU</a>
+          <a href="{% url 'delete_bulk_ous' %}" class="btn btn-outline-danger btn-sm">Bulk OUs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

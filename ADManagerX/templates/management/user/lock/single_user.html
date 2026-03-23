@@ -1,0 +1,30 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-5 bg-white">
+  {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+  <div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+      <div class="card shadow border-0">
+        <div class="card-body">
+          <h4 class="card-title">Lock Single User</h4>
+          <p class="card-description">Enter the username you want to lock.</p>
+          <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" class="form-control" id="username" name="username" placeholder="e.g. john.doe" required>
+            </div>
+            <button type="submit" class="btn btn-dark">Lock User</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

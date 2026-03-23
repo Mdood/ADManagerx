@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-4 bg-white">
+  <div class="d-flex align-items-center mb-3">
+    <h4 class="mb-0">Modify Organizational Unit</h4>
+    <a href="{% url 'ou_management' %}" class="btn btn-light btn-sm ml-auto">
+      <i class="mdi mdi-arrow-left"></i> Back to OU Management
+    </a>
+  </div>
+  <p class="text-muted">Search and select an OU, then update its properties.</p>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border mb-3">
+        <div class="card-body">
+          <!-- OU Picker (placeholder for now) -->
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-group">
+              <label for="ou_selector" class="font-weight-medium">Select OU</label>
+              <div class="input-group">
+                <input type="text" id="ou_selector" name="ou_dn" class="form-control"
+                       placeholder="Type or paste OU DN (e.g., OU=HR,DC=example,DC=com)" required>
+                <div class="input-group-append">
+                  <button class="btn btn-outline-secondary" type="button" disabled>
+                    <i class="mdi mdi-sitemap"></i> Browse
+                  </button>
+                </div>
+              </div>
+              <small class="form-text text-muted">
+                We’ll replace this with a real tree/OU picker in the backend phase.
+              </small>
+            </div>
+
+            <!-- Editable fields -->
+            <div class="form-group">
+              <label for="new_name" class="font-weight-medium">New OU Name</label>
+              <input type="text" id="new_name" name="new_name" class="form-control"
+                     placeholder="Leave empty to keep current name" maxlength="128">
+            </div>
+
+            <div class="form-group">
+              <label for="description" class="font-weight-medium">Description</label>
+              <textarea id="description" name="description" rows="3" class="form-control"
+                        placeholder="Update the description…"></textarea>
+            </div>
+
+            <div class="form-group form-check">
+              <input type="checkbox" class="form-check-input" id="protect" name="protect">
+              <label class="form-check-label" for="protect">Protect container from accidental deletion</label>
+            </div>
+
+            <div class="d-flex">
+              <button type="submit" class="btn btn-warning">
+                <i class="mdi mdi-content-save"></i> Update OU
+              </button>
+              <a href="{% url 'ou_management' %}" class="btn btn-outline-secondary ml-2">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Optional: Move OU (separate action usually, but handy here as a teaser) -->
+      <div class="card border-0 bg-light">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted mb-2">Moving an OU?</h6>
+          <p class="mb-2">
+            If you also need to move the OU to a different parent, use the dedicated
+            “Move OU” action from the OU Management page for better safeguards and preview.
+          </p>
+          <a href="{% url 'move_ou' %}" class="btn btn-sm btn-dark">Go to Move OU</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 mt-4 mt-lg-0">
+      <div class="card border-0 bg-light">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted mb-3">Notes</h6>
+          <ul class="pl-3 mb-0">
+            <li>Renaming an OU changes its DN; downstream permissions and links may be affected.</li>
+            <li>Keep “Protect from accidental deletion” enabled unless you are performing maintenance.</li>
+            <li>Moving OUs is a separate workflow with confirmation and preview.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

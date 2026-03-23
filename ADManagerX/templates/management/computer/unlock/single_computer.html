@@ -1,0 +1,29 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-5 bg-white">
+  <div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+      <div class="card shadow border-0">
+        <div class="card-body">
+          <h4 class="card-title">Unlock Single Computer</h4>
+          <p class="card-description">Provide the computer name to unlock the computer account.</p>
+
+          <form method="POST" action="{% url 'unlock_single_computer' %}">
+            {% csrf_token %}
+
+            <div class="form-group">
+              <label for="computer_name">Computer Name</label>
+              <input type="text" class="form-control" id="computer_name" name="computer_name" placeholder="Enter the computer name" required>
+            </div>
+
+            <button type="submit" class="btn btn-success mt-3">Unlock Computer</button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-5 bg-white">
+  <div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+      <div class="card shadow border-0">
+        <div class="card-body">
+          <h4 class="card-title">Lock Single Computer</h4>
+          <p class="card-description">Enter the computer name to lock.</p>
+          <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="computer_name">Computer Name</label>
+              <input type="text" class="form-control" id="computer_name" name="computer_name" placeholder="e.g. PC-001" required>
+            </div>
+            <button type="submit" class="btn btn-dark">Lock Computer</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

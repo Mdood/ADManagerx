@@ -1,0 +1,56 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block title %}Group Reports{% endblock %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-5 bg-white w-auto h-auto">
+    <h4 class="mb-3">Group Reports</h4>
+    <p class="text-muted">Select a report to view detailed group information.</p>
+
+    <!-- Member-based Reports -->
+    <h5 class="mt-4">Member-based Reports</h5>
+    <div class="row">
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Group Members</a></div>
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Detailed Group Members</a></div>
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Groups Without Members</a></div>
+    </div>
+
+    <!-- General Reports -->
+    <h5 class="mt-4">General Reports</h5>
+    <div class="row">
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">All Groups</a></div>
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Recently Created Groups</a></div>
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Recently Modified Groups</a></div>
+    </div>
+
+    <!-- Group Type Reports -->
+    <h5 class="mt-4">Group Type Reports</h5>
+    <div class="row">
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-warning w-100">Security Groups</a></div>
+        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-warning w-100">Distribution Groups</a></div>
+    </div>
+
+    <hr class="my-4">
+    <h5>All Groups (First 200)</h5>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in groups %}
+                    <tr>
+                        <td>{{ g.name }}</td>
+                        <td>{{ g.description }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="2" class="text-muted">No data available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

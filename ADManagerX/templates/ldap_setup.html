@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}LDAP Setup{% endblock %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-4">
+  <div class="card shadow-sm border">
+    <div class="card-body">
+      <h4 class="card-title mb-3">LDAP Configuration</h4>
+      <p class="text-muted mb-4">
+        Enter the minimum details needed to connect to Active Directory. You can test the connection before saving.
+      </p>
+      <div class="alert alert-info">
+        Tip: Password operations (create/reset) usually require LDAPS. Enable SSL if your domain controller supports it.
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+      {% if form.errors %}
+        <div class="alert alert-danger mb-3">
+          Please fix the highlighted fields below.
+          <ul class="mb-0 mt-2">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <li><strong>{{ field|capfirst }}:</strong> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+              <li><strong>Form:</strong> {{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Active Directory IP</label>
+              {{ form.server_ip }}
+              {% if form.server_ip.errors %}<small class="text-danger">{{ form.server_ip.errors|striptags }}</small>{% endif %}
+              <small class="form-text text-muted">IP address of your Domain Controller (example: <code>192.168.1.10</code>).</small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Domain Controller Name</label>
+              {{ form.server_name }}
+              {% if form.server_name.errors %}<small class="text-danger">{{ form.server_name.errors|striptags }}</small>{% endif %}
+              <small class="form-text text-muted">Computer name / hostname of the Domain Controller (example: <code>DC01</code>).</small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Domain</label>
+              {{ form.service_domain }}
+              {% if form.service_domain.errors %}<small class="text-danger">{{ form.service_domain.errors|striptags }}</small>{% endif %}
+              <small class="form-text text-muted">Example: <code>corp.local</code></small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Service Account Username</label>
+              {{ form.service_username }}
+              {% if form.service_username.errors %}<small class="text-danger">{{ form.service_username.errors|striptags }}</small>{% endif %}
+              <small class="form-text text-muted">Username only (no domain).</small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Domain DN (Base DN)</label>
+              {{ form.base_dn }}
+              {% if form.base_dn.errors %}<small class="text-danger">{{ form.base_dn.errors|striptags }}</small>{% endif %}
+              <small class="form-text text-muted">Example: <code>DC=corp,DC=local</code></small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Default Users OU DN</label>
+              {{ form.users_ou_dn }}
+              {% if form.users_ou_dn.errors %}<small class="text-danger">{{ form.users_ou_dn.errors|striptags }}</small>{% endif %}
+              <small class="form-text text-muted">Example: <code>OU=Users,DC=corp,DC=local</code></small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Default Computers OU DN</label>
+              {{ form.computers_ou_dn }}
+              {% if form.computers_ou_dn.errors %}<small class="text-danger">{{ form.computers_ou_dn.errors|striptags }}</small>{% endif %}
+              <small class="form-text text-muted">Example: <code>OU=Computers,DC=corp,DC=local</code></small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Default Groups OU DN</label>
+              {{ form.groups_ou_dn }}
+              {% if form.groups_ou_dn.errors %}<small class="text-danger">{{ form.groups_ou_dn.errors|striptags }}</small>{% endif %}
+              <small class="form-text text-muted">Example: <code>OU=Groups,DC=corp,DC=local</code></small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>UPN Suffix</label>
+              {{ form.upn_suffix }}
+              {% if form.upn_suffix.errors %}<small class="text-danger">{{ form.upn_suffix.errors|striptags }}</small>{% endif %}
+              <small class="form-text text-muted">Example: <code>corp.local</code></small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Service Account Password</label>
+              {{ form.bind_password }}
+              {% if form.bind_password.errors %}<small class="text-danger">{{ form.bind_password.errors|striptags }}</small>{% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group form-check mt-4 pt-2">
+              {{ form.use_ssl }} <label class="form-check-label">Use SSL (LDAPS)</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group form-check mt-4 pt-2">
+              {{ form.safe_mode }} <label class="form-check-label">Safe mode (dry-run for bulk/critical actions)</label>
+            </div>
+          </div>
+
+          {{ form.server_uri }}
+          {{ form.bind_dn }}
+          {{ form.user_search_base }}
+          {{ form.user_search_filter }}
+          {{ form.user_domain }}
+        </div>
+
+        <div class="mt-3 d-flex">
+          <button name="test_only" value="1" class="btn btn-outline-primary mr-2" type="submit">Test Connection</button>
+          <button class="btn btn-primary" type="submit">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

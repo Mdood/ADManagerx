@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-5 bg-white">
+  <div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+      <div class="card shadow border-0">
+        <div class="card-body">
+          <h4 class="card-title">Lock Bulk Computers</h4>
+          <p class="card-description">
+            Upload an Excel file with computer names to lock their accounts.
+          </p>
+          <small class="text-muted">Expected columns: computer_name</small>
+
+          <form method="POST" enctype="multipart/form-data" action="{% url 'lock_bulk_computers' %}">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="excel_file">Select Excel File (.xlsx)</label>
+              <input type="file" class="form-control-file" id="excel_file" name="excel_file" accept=".xlsx" required>
+            </div>
+
+            <button type="submit" class="btn btn-dark mt-3">Lock Computers</button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

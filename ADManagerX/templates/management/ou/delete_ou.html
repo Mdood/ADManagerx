@@ -1,0 +1,146 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-4 bg-white">
+  <div class="row">
+    <div class="col-md-10 col-lg-9 mx-auto">
+      <!-- Header -->
+      <div class="mb-3">
+        <h4 class="mb-0">Delete Organizational Unit <span class="badge badge-danger ml-2">Dangerous</span></h4>
+      </div>
+      <p class="text-muted mb-4">
+        Permanently remove an OU and optionally its child objects. This action cannot be undone.
+      </p>
+
+      <!-- Messages (success/error from backend later) -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="card shadow-sm border">
+        <div class="card-body">
+          <form method="post" id="delete-ou-form" novalidate>
+            {% csrf_token %}
+            <!-- OU Target -->
+            <div class="form-group">
+              <label for="ou_dn" class="font-weight-medium">OU Distinguished Name (DN)</label>
+              <input type="text" class="form-control" id="ou_dn" name="ou_dn"
+                     placeholder="e.g. OU=HR,OU=Departments,DC=example,DC=local" required>
+              <small class="form-text text-muted">
+                Paste the exact DN of the OU you want to delete.
+              </small>
+            </div>
+
+            <!-- Options -->
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="include_children" name="include_children">
+                  <label class="form-check-label" for="include_children">
+                    Also delete child objects (OUs, users, groups, computers)
+                  </label>
+                </div>
+                <small class="form-text text-muted">If unchecked, delete will fail if the OU is not empty.</small>
+              </div>
+              <div class="form-group col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="dry_run" name="dry_run">
+                  <label class="form-check-label" for="dry_run">
+                    Dry run (preview only)
+                  </label>
+                </div>
+                <small class="form-text text-muted">Simulate and show what would be deleted without making changes.</small>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group">
+              <label for="reason" class="font-weight-medium">Reason / Notes (optional)</label>
+              <textarea class="form-control" id="reason" name="reason" rows="3"
+                        placeholder="Why is this OU being deleted?"></textarea>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="alert alert-danger d-flex align-items-start">
+              <i class="mdi mdi-alert-octagon mr-2"></i>
+              <div>
+                <b>Irreversible action.</b> Deleting an OU removes it from Active Directory.
+                Ensure you have backups and the correct DN selected.
+              </div>
+            </div>
+
+            <!-- Confirm -->
+            <div class="form-group mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="confirm_delete" name="confirm_delete">
+                <label class="form-check-label font-weight-medium" for="confirm_delete">
+                  I understand this cannot be undone.
+                </label>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex align-items-center">
+              <button type="submit" class="btn btn-danger" id="btnDelete" disabled>
+                <i class="mdi mdi-delete-forever mr-1"></i> Delete OU
+              </button>
+              <a href="{% url 'ou_management' %}" class="btn btn-light ml-2">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Preview (shown only when Dry run is checked via basic JS) -->
+      <div id="dryRunPreview" class="card mt-3 d-none">
+        <div class="card-body">
+          <h6 class="card-title mb-2">Dry Run Preview</h6>
+          <p class="text-muted mb-2">This is a placeholder preview. Backend will populate actual impact later.</p>
+          <ul class="mb-0">
+            <li><span class="text-muted">OU:</span> <span id="previewOu">—</span></li>
+            <li><span class="text-muted">Child objects:</span> approx. <span id="previewChildren">—</span></li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Minimal page JS: enable delete button & simple dry-run preview -->
+<script>
+  (function() {
+    var confirmBox = document.getElementById('confirm_delete');
+    var deleteBtn  = document.getElementById('btnDelete');
+    var dryRun     = document.getElementById('dry_run');
+    var ouInput    = document.getElementById('ou_dn');
+    var preview    = document.getElementById('dryRunPreview');
+    var prevOu     = document.getElementById('previewOu');
+    var prevKids   = document.getElementById('previewChildren');
+
+    function toggleDelete() {
+      deleteBtn.disabled = !confirmBox.checked;
+    }
+    function togglePreview() {
+      if (dryRun.checked && ouInput.value.trim().length > 0) {
+        prevOu.textContent = ouInput.value.trim();
+        prevKids.textContent = 'N/A';
+        preview.classList.remove('d-none');
+      } else {
+        preview.classList.add('d-none');
+      }
+    }
+
+    confirmBox.addEventListener('change', toggleDelete);
+    dryRun.addEventListener('change', togglePreview);
+    ouInput.addEventListener('input', togglePreview);
+  })();
+</script>
+{% endblock %}

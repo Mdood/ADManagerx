@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-4 bg-white">
+  <div class="d-flex align-items-center mb-3">
+    <h4 class="mb-0">Create New Organizational Unit</h4>
+    <a href="{% url 'ou_management' %}" class="btn btn-light btn-sm ml-auto">
+      <i class="mdi mdi-arrow-left"></i> Back to OU Management
+    </a>
+  </div>
+  <p class="text-muted">Fill in the details below to create a new OU.</p>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border">
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- OU Name -->
+            <div class="form-group">
+              <label for="ou_name" class="font-weight-medium">OU Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="ou_name" name="ou_name"
+                     placeholder="e.g., HR, Engineering, Sales"
+                     required maxlength="128">
+              <small class="form-text text-muted">Choose a short, descriptive name.</small>
+            </div>
+
+            <!-- Parent OU (DN or selector placeholder) -->
+            <div class="form-group">
+              <label for="parent_ou" class="font-weight-medium">Parent OU / DN</label>
+              <input type="text" class="form-control" id="parent_ou" name="parent_ou"
+                     placeholder="e.g., OU=Departments,DC=example,DC=com">
+              <small class="form-text text-muted">
+                You can enter a full DN. Later we’ll replace this with a searchable OU picker.
+              </small>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+              <label for="description" class="font-weight-medium">Description (optional)</label>
+              <textarea class="form-control" id="description" name="description" rows="3"
+                        placeholder="Add a short description…"></textarea>
+            </div>
+
+            <!-- Protect from deletion -->
+            <div class="form-group form-check mb-4">
+              <input type="checkbox" class="form-check-input" id="protect" name="protect" checked>
+              <label class="form-check-label" for="protect">
+                Protect container from accidental deletion
+              </label>
+            </div>
+
+            <div class="d-flex">
+              <button type="submit" class="btn btn-primary">
+                <i class="mdi mdi-check"></i> Create OU
+              </button>
+              <a href="{% url 'ou_management' %}" class="btn btn-outline-secondary ml-2">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side info -->
+    <div class="col-lg-4 mt-4 mt-lg-0">
+      <div class="card border-0 bg-light">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted mb-3">Tips</h6>
+          <ul class="pl-3 mb-0">
+            <li>Keep OU names short and consistent (e.g., “HR”, “Finance”, “Sales”).</li>
+            <li>Use the Parent DN to place the OU at the correct level.</li>
+            <li>Leave “Protect from accidental deletion” checked unless you have a reason to uncheck it.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

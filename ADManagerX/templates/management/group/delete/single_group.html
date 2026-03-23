@@ -1,0 +1,30 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-5 bg-white">
+  <div class="row">
+    <div class="col-md-6 offset-md-3 grid-margin stretch-card">
+      <div class="card shadow border-0">
+        <div class="card-body">
+          <h4 class="card-title text-danger">Delete Single Group</h4>
+          <p class="card-description">This action is irreversible.</p>
+
+          <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+              <label>Group Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="group_name" required>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="confirm_delete" name="confirm_delete">
+              <label class="form-check-label" for="confirm_delete">I understand this cannot be undone.</label>
+            </div>
+            <button type="submit" class="btn btn-danger">Delete Group</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

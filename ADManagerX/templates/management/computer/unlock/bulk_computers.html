@@ -1,0 +1,30 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-5 bg-white">
+  <div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+      <div class="card shadow border-0">
+        <div class="card-body">
+          <h4 class="card-title">Unlock Bulk Computers</h4>
+          <p class="card-description">Upload an Excel file with computer names to unlock multiple computer accounts.</p>
+          <small class="text-muted">Expected columns: computer_name</small>
+
+          <form method="POST" action="{% url 'unlock_bulk_computers' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+              <label for="excel_file">Excel File (.xlsx)</label>
+              <input type="file" class="form-control-file" id="excel_file" name="excel_file" accept=".xlsx" required>
+            </div>
+
+            <button type="submit" class="btn btn-success mt-3">Unlock Computers</button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
