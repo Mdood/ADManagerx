@@ -9,25 +9,26 @@
         {% endfor %}
       {% endif %}
   <div class="row">
-    <div class="col-md-12 grid-margin stretch-card">
+    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
       <div class="card shadow border-0">
         <div class="card-body">
-          <h4 class="card-title">Lock Bulk Users</h4>
+          <h4 class="card-title">Bulk Users Lock</h4>
           <p class="card-description">
-            Upload an Excel file with usernames to lock their accounts.
+            Upload an Excel file to lock multiple users at once.
           </p>
           <small class="text-muted">Expected columns: username</small>
 
-          <form method="POST" enctype="multipart/form-data" action="{% url 'lock_bulk_users' %}">
+          <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-group">
-              <label for="excel_file">Select Excel File (.xlsx)</label>
-              <input type="file" class="form-control-file" id="excel_file" name="excel_file" accept=".xlsx" required>
+              <label for="file">Upload Excel File (.xlsx)</label>
+              <input type="file" name="file" id="file" accept=".xlsx" class="form-control" required>
             </div>
-
-            <button type="submit" class="btn btn-dark mt-3">Lock Users</button>
+            <button type="submit" class="btn btn-dark mt-3">Upload</button>
+            <a href="{% static 'assets/samples/bulk_reset_passwords_template.xlsx' %}" class="btn btn-outline-dark mt-3 ml-2">
+              Download Sample File
+            </a>
           </form>
-
         </div>
       </div>
     </div>

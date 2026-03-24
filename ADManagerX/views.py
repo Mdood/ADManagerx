@@ -32,7 +32,8 @@ from .ad_service import (
     update_ou,
     delete_ou,
     move_ou as ad_move_ou,
-    list_ous, list_groups
+    list_ous, list_groups,
+    resolve_ou_name_to_dn,
 )
 
 
@@ -271,26 +272,64 @@ def update_single_user(request):
 
 def update_bulk_users(request):
     if request.method == "POST":
-        file = request.FILES.get("excel_file")
+        file = request.FILES.get("file")
         try:
             rows = _read_excel_rows(file)
-            for row in rows:
-                username = str(row.get("username", "")).strip()
-                if not username:
-                    continue
-                updates = {
-                    "givenName": row.get("first_name"),
-                    "sn": row.get("last_name"),
-                    "displayName": row.get("display_name"),
-                    "mail": row.get("email"),
-                    "telephoneNumber": row.get("phone"),
-                    "department": row.get("department"),
-                    "description": row.get("description"),
-                }
-                update_user(username, updates)
-            messages.success(request, "Bulk update completed.")
+
+            updated_count = 0
+            errors = []
+
+            for index, row in enumerate(rows, start=2):
+                try:
+                    username = str(row.get("username", "") or "").strip()
+                    if not username:
+                        errors.append(f"Row {index}: username is required.")
+                        continue
+
+                    # Validate OU first before changing anything
+                    ou_name = str(row.get("ou_name", "") or "").strip()
+                    target_ou_dn = None
+                    if ou_name:
+                        target_ou_dn = resolve_ou_name_to_dn(ou_name)
+
+                    updates = {
+                        "givenName": str(row.get("first_name", "") or "").strip(),
+                        "sn": str(row.get("last_name", "") or "").strip(),
+                        "displayName": str(row.get("display_name", "") or "").strip(),
+                        "mail": str(row.get("email", "") or "").strip(),
+                        "telephoneNumber": str(row.get("phone", "") or "").strip(),
+                        "department": str(row.get("department", "") or "").strip(),
+                        "description": str(row.get("description", "") or "").strip(),
+                    }
+
+                    # Update only non-empty fields
+                    update_user(username, updates)
+
+                    # Move only if ou_name was provided
+                    if target_ou_dn:
+                        move_user(username, target_ou_dn)
+
+                    updated_count += 1
+
+                except ADServiceError as e:
+                    errors.append(f"Row {index}: {e}")
+                except Exception as e:
+                    errors.append(f"Row {index}: Unexpected error: {e}")
+
+            if updated_count:
+                messages.success(request, f"{updated_count} users updated successfully.")
+
+            if errors:
+                for err in errors[:20]:
+                    messages.error(request, err)
+                if len(errors) > 20:
+                    messages.error(request, f"And {len(errors) - 20} more errors.")
+
         except ADServiceError as e:
             messages.error(request, f"Bulk update failed: {e}")
+        except Exception as e:
+            messages.error(request, f"Unexpected error: {e}")
+
     return render(request, 'management/user/update/bulk_users.html')
 
 def create_single_user(request):
@@ -379,37 +418,108 @@ def create_single_user(request):
         {"ous": ous, "groups": groups}
     )
 
+def _validate_required_headers(rows, required_headers):
+    if not rows:
+        raise ADServiceError("No data found in Excel file.")
+
+    first_row_keys = set(rows[0].keys())
+    missing = [h for h in required_headers if h not in first_row_keys]
+    if missing:
+        raise ADServiceError(f"Missing required columns: {', '.join(missing)}")
+
 def create_bulk_users(request):
     if request.method == "POST":
         file = request.FILES.get("file")
         try:
             rows = _read_excel_rows(file)
-            for row in rows:
-                username = str(row.get("username", "")).strip()
-                first_name = str(row.get("first_name", "")).strip()
-                last_name = str(row.get("last_name", "")).strip()
-                email = str(row.get("email", "")).strip()
-                password = str(row.get("password", "")).strip()
-                if username and password:
-                    create_user(username, first_name, last_name, email, password,
-                                str(row.get("phone", "") or "").strip(),
-                                str(row.get("department", "") or "").strip(),
-                                str(row.get("description", "") or "").strip())
-            messages.success(request, "Bulk user creation completed.")
+
+            _validate_required_headers(
+                rows,
+                ["username", "first_name", "last_name", "email", "password", "ou_name"]
+            )
+
+            created_count = 0
+            errors = []
+
+            for index, row in enumerate(rows, start=2):  # Excel row numbering starts at 2 after header
+                try:
+                    username = str(row.get("username", "") or "").strip()
+                    first_name = str(row.get("first_name", "") or "").strip()
+                    last_name = str(row.get("last_name", "") or "").strip()
+                    email = str(row.get("email", "") or "").strip()
+                    password = str(row.get("password", "") or "").strip()
+                    phone = str(row.get("phone", "") or "").strip()
+                    department = str(row.get("department", "") or "").strip()
+                    description = str(row.get("description", "") or "").strip()
+                    ou_name = str(row.get("ou_name", "") or "").strip()
+
+                    if not username:
+                        errors.append(f"Row {index}: username is required.")
+                        continue
+
+                    if not password:
+                        errors.append(f"Row {index}: password is required.")
+                        continue
+
+                    target_ou_dn = None
+                    if ou_name:
+                        target_ou_dn = resolve_ou_name_to_dn(ou_name)
+
+                    create_user(
+                        username=username,
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        password=password,
+                        phone=phone,
+                        department=department,
+                        description=description,
+                        target_ou_dn=target_ou_dn,
+                    )
+                    created_count += 1
+
+                except ADServiceError as e:
+                    errors.append(f"Row {index}: {e}")
+                except Exception as e:
+                    errors.append(f"Row {index}: Unexpected error: {e}")
+
+            if created_count:
+                messages.success(request, f"{created_count} users created successfully.")
+
+            if errors:
+                for err in errors[:20]:
+                    messages.error(request, err)
+                if len(errors) > 20:
+                    messages.error(request, f"And {len(errors) - 20} more errors.")
+
         except ADServiceError as e:
             messages.error(request, f"Bulk create failed: {e}")
+        except Exception as e:
+            messages.error(request, f"Unexpected error: {e}")
+
     return render(request, 'management/user/create/bulk_users.html')
 
 def move_single_user(request):
+    try:
+        ous = list_ous()   # [{"ou": "...", "dn": "..."}]
+    except Exception:
+        ous = []
+
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
-        target_ou = request.POST.get("target_ou", "").strip()
+        target_ou_dn = request.POST.get("target_ou_dn", "").strip()
+
         try:
-            move_user(username, target_ou)
-            messages.success(request, f"User moved: {username}")
+            move_user(username, target_ou_dn)
+            messages.success(request, f"User moved successfully: {username}")
         except ADServiceError as e:
             messages.error(request, f"Move failed: {e}")
-    return render(request, 'management/user/move/single_user.html')
+
+    return render(
+        request,
+        'management/user/move/single_user.html',
+        {"ous": ous},
+    )
 
 def move_bulk_users(request):
     if request.method == "POST":

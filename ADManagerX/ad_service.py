@@ -305,6 +305,29 @@ Write-Output ("VERIFY pwdLastSet=" + $verify.pwdLastSet)
         raise ADServiceError(
             f"Password reset executed but no verification output returned. STDOUT={out}"
         )
+    
+def resolve_ou_name_to_dn(ou_name: str) -> str:
+    """
+    Resolve a friendly OU name like 'HR' to its full DN.
+    Raises ADServiceError if not found or ambiguous.
+    """
+    target = (ou_name or "").strip().lower()
+    if not target:
+        raise ADServiceError("OU name is required.")
+
+    ous = list_ous()
+    matches = [ou for ou in ous if (ou.get("ou") or "").strip().lower() == target]
+
+    if not matches:
+        raise ADServiceError(f"OU not found: {ou_name}")
+
+    if len(matches) > 1:
+        matched_dns = ", ".join(m["dn"] for m in matches)
+        raise ADServiceError(
+            f"OU name '{ou_name}' is ambiguous. Multiple OUs found: {matched_dns}"
+        )
+
+    return matches[0]["dn"]
 
 
 def _get_user_dn(conn: Connection, cfg: ADConfig, username: str) -> Optional[str]:
@@ -484,22 +507,55 @@ def unlock_user(username: str) -> None:
         conn.unbind()
 
 
-def move_user(username: str, target_ou_dn: str) -> None:
+def _move_user_via_winrm(cfg: ADConfig, username: str, target_ou_dn: str) -> str:
+    username_esc = _ps_escape_single_quotes((username or "").strip())
+    target_ou_esc = _ps_escape_single_quotes((target_ou_dn or "").strip())
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+
+    if not username_esc:
+        raise ADServiceError("Username is required.")
+
+    if not target_ou_esc:
+        raise ADServiceError("Target OU DN is required.")
+
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+$user = Get-ADUser -Identity '{username_esc}' -Server '{server_esc}' -Properties DistinguishedName
+if (-not $user) {{
+    throw "User not found: {username_esc}"
+}}
+
+Move-ADObject -Identity $user.DistinguishedName -TargetPath '{target_ou_esc}' -Server '{server_esc}'
+
+$verify = Get-ADUser -Identity '{username_esc}' -Server '{server_esc}' -Properties DistinguishedName
+Write-Output ("MOVED_DN=" + $verify.DistinguishedName)
+"""
+    out = _run_ps(ps)
+
+    moved_dn = None
+    for line in out.splitlines():
+        if line.startswith("MOVED_DN="):
+            moved_dn = line.split("=", 1)[1].strip()
+            break
+
+    if not moved_dn:
+        raise ADServiceError(f"Move executed but verification output not returned. STDOUT={out}")
+
+    return moved_dn
+
+
+def move_user(username: str, target_ou_dn: str) -> str:
     cfg = _load_config()
     if cfg.safe_mode:
-        return
+        return ""
 
-    conn = _connect(cfg)
-    try:
-        dn = _get_user_dn(conn, cfg, username)
-        if not dn:
-            raise ADServiceError("User not found.")
-        rdn = dn.split(",", 1)[0]
-        conn.modify_dn(dn, rdn, new_superior=target_ou_dn)
-        if conn.result["description"] != "success":
-            raise ADServiceError(conn.result.get("message", "Failed to move user."))
-    finally:
-        conn.unbind()
+    valid_ou_dns = {ou["dn"] for ou in list_ous() if ou.get("dn")}
+    if target_ou_dn not in valid_ou_dns:
+        raise ADServiceError("Selected OU is invalid.")
+
+    return _move_user_via_winrm(cfg, username, target_ou_dn)
 
 
 def update_user(username: str, updates: dict) -> None:

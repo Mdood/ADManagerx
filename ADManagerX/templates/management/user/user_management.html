@@ -12,7 +12,9 @@
       <div class="card shadow-sm border">
         <div class="card-body">
           <h5 class="card-title">Create User</h5>
-          <p class="card-text">Add a new user account to the system.</p>
+          <p class="card-text">Add a new user account to the system.
+
+          </p>
           <a href="{% url 'create_single_user' %}" class="btn btn-primary btn-sm">Single User</a>
           <a href="{% url 'bulk_users' %}" class="btn btn-outline-primary btn-sm">Bulk Users</a>
         </div>
@@ -22,7 +24,9 @@
       <div class="card shadow-sm border">
         <div class="card-body">
           <h5 class="card-title">Update User</h5>
-          <p class="card-text">Modify existing user details.</p>
+          <p class="card-text">Modify existing user details.
+
+          </p>
           <a href="{% url 'update_single_user' %}" class="btn btn-warning btn-sm">Single User</a>
           <a href="{% url 'update_bulk_users' %}" class="btn btn-outline-warning btn-sm">Bulk Users</a>
         </div>
@@ -32,7 +36,7 @@
       <div class="card shadow-sm border">
         <div class="card-body">
           <h5 class="card-title">Lock User</h5>
-          <p class="card-text">Lock accounts for security or policy enforcement.</p>
+          <p class="card-text">Lock accounts for security or policy.</p>
           <a href="{% url 'lock_single_user' %}" class="btn btn-dark btn-sm">Single User</a>
           <a href="{% url 'lock_bulk_users' %}" class="btn btn-outline-dark btn-sm">Bulk Users</a>
         </div>

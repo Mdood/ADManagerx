@@ -12,16 +12,22 @@
     <div class="col-md-8 offset-md-2 grid-margin stretch-card">
       <div class="card shadow border-0">
         <div class="card-body">
-          <h4 class="card-title">Reset Password (Bulk Users)</h4>
-          <p class="card-description">Upload an Excel file with usernames and their new passwords</p>
-          <form method="POST" enctype="multipart/form-data">
+          <h4 class="card-title">Bulk Users Reset Passwords</h4>
+          <p class="card-description">
+            Upload an Excel file to reset passwords for multiple users at once.
+          </p>
+          <small class="text-muted">Expected columns: username, new_password</small>
+
+          <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-group">
-              <label for="excel_file">Excel File</label>
-              <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx">
-              <small class="form-text text-muted">Expected columns: username, new_password</small>
+              <label for="file">Upload Excel File (.xlsx)</label>
+              <input type="file" name="file" id="file" accept=".xlsx" class="form-control" required>
             </div>
-            <button type="submit" class="btn btn-primary">Upload & Reset</button>
+            <button type="submit" class="btn btn-primary mt-3">Upload</button>
+            <a href="{% static 'assets/samples/bulk_reset_passwords_template.xlsx' %}" class="btn btn-outline-primary mt-3 ml-2">
+              Download Sample File
+            </a>
           </form>
         </div>
       </div>

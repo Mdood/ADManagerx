@@ -9,24 +9,26 @@
         {% endfor %}
       {% endif %}
   <div class="row">
-    <div class="col-md-12 grid-margin stretch-card">
+    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
       <div class="card shadow border-0">
         <div class="card-body">
-          <h4 class="card-title">Unlock Bulk Users</h4>
-          <p class="card-description">Upload an Excel file with usernames to unlock multiple user accounts.</p>
+          <h4 class="card-title">Bulk Users Unlock</h4>
+          <p class="card-description">
+            Upload an Excel file to unlock multiple users at once.
+          </p>
           <small class="text-muted">Expected columns: username</small>
 
-          <form method="POST" action="{% url 'unlock_bulk_users' %}" enctype="multipart/form-data">
+          <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-
             <div class="form-group">
-              <label for="excel_file">Excel File (.xlsx)</label>
-              <input type="file" class="form-control-file" id="excel_file" name="excel_file" accept=".xlsx" required>
+              <label for="file">Upload Excel File (.xlsx)</label>
+              <input type="file" name="file" id="file" accept=".xlsx" class="form-control" required>
             </div>
-
-            <button type="submit" class="btn btn-success mt-3">Unlock Users</button>
+            <button type="submit" class="btn btn-success mt-3">Upload</button>
+            <a href="{% static 'assets/samples/bulk_unlock_users_template.xlsx' %}" class="btn btn-outline-success mt-3 ml-2">
+              Download Sample File
+            </a>
           </form>
-
         </div>
       </div>
     </div>
