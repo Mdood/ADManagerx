@@ -12,9 +12,6 @@ from ldap3 import (
     BASE,
     SUBTREE,
     Connection,
-    MODIFY_ADD,
-    MODIFY_DELETE,
-    MODIFY_REPLACE,
     Server,
     Tls,
 )
@@ -86,8 +83,7 @@ def _connect(cfg: ADConfig) -> Connection:
     if "@" not in bind_user and "," not in bind_user:
         bind_user = f"{bind_user}@{cfg.upn_suffix}"
 
-    conn = Connection(server, user=bind_user, password=cfg.bind_password, auto_bind=True)
-    return conn
+    return Connection(server, user=bind_user, password=cfg.bind_password, auto_bind=True)
 
 
 def _search_one(
@@ -120,6 +116,7 @@ def _username_to_upn(username: str, upn_suffix: str) -> str:
 
 
 def _normalize_computer_sam(name: str) -> str:
+    name = (name or "").strip()
     return name if name.endswith("$") else f"{name}$"
 
 
@@ -142,6 +139,86 @@ def _run_ps(ps_script: str) -> str:
     return out
 
 
+def test_connection() -> None:
+    cfg = _load_config()
+    conn = _connect(cfg)
+    conn.unbind()
+
+
+def _resolve_base_dn(conn: Connection, cfg: ADConfig) -> str:
+    if (cfg.base_dn or "").strip():
+        return cfg.base_dn.strip()
+
+    conn.search(
+        search_base="",
+        search_filter="(objectClass=*)",
+        search_scope=BASE,
+        attributes=["defaultNamingContext"],
+        size_limit=1,
+    )
+    if not conn.entries:
+        raise ADServiceError("Cannot read RootDSE (defaultNamingContext). Check bind/permissions.")
+
+    return str(conn.entries[0]["defaultNamingContext"].value)
+
+
+# -----------------------------
+# LDAP read helpers only
+# -----------------------------
+
+def _get_user_dn(conn: Connection, cfg: ADConfig, username: str) -> Optional[str]:
+    flt = cfg.user_search_filter.format(username=username)
+    entry = _search_one(conn, cfg.base_dn, flt, attributes=["distinguishedName"])
+    if not entry:
+        return None
+    return entry.entry_dn
+
+
+def _get_computer_dn(conn: Connection, cfg: ADConfig, computer_name: str) -> Optional[str]:
+    sam = _normalize_computer_sam(computer_name)
+    flt = f"(sAMAccountName={sam})"
+    entry = _search_one(conn, cfg.base_dn, flt, attributes=["distinguishedName"])
+    if not entry:
+        return None
+    return entry.entry_dn
+
+
+def _get_group_dn(conn: Connection, cfg: ADConfig, group_name: str) -> Optional[str]:
+    flt = f"(cn={group_name})"
+    entry = _search_one(conn, cfg.base_dn, flt, attributes=["distinguishedName"])
+    if not entry:
+        return None
+    return entry.entry_dn
+
+
+def resolve_ou_name_to_dn(ou_name: str) -> str:
+    """
+    Resolve a friendly OU name like 'HR' to its full DN.
+    Raises ADServiceError if not found or ambiguous.
+    """
+    target = (ou_name or "").strip().lower()
+    if not target:
+        raise ADServiceError("OU name is required.")
+
+    ous = list_ous()
+    matches = [ou for ou in ous if (ou.get("ou") or "").strip().lower() == target]
+
+    if not matches:
+        raise ADServiceError(f"OU not found: {ou_name}")
+
+    if len(matches) > 1:
+        matched_dns = ", ".join(m["dn"] for m in matches)
+        raise ADServiceError(
+            f"OU name '{ou_name}' is ambiguous. Multiple OUs found: {matched_dns}"
+        )
+
+    return matches[0]["dn"]
+
+
+# -----------------------------
+# User operations via WinRM
+# -----------------------------
+
 def _create_user_via_winrm(
     cfg: ADConfig,
     username: str,
@@ -152,9 +229,10 @@ def _create_user_via_winrm(
     phone: str = "",
     department: str = "",
     description: str = "",
+    hr_id: str = "",
     target_ou_dn: Optional[str] = None,
     must_change_password: bool = False,
-    user_cannot_change_password: bool = False,
+    user_cannot_change_password: bool = False,  # kept for compatibility; not enforced here
     password_never_expires: bool = False,
     account_disabled: bool = False,
 ) -> str:
@@ -166,14 +244,13 @@ def _create_user_via_winrm(
     phone = (phone or "").strip()
     department = (department or "").strip()
     description = (description or "").strip()
+    hr_id = (hr_id or "").strip()
     ou_dn = (target_ou_dn or "").strip() or cfg.users_ou_dn
 
     if not username:
         raise ADServiceError("Username is required.")
-
     if not password:
         raise ADServiceError("Password is required.")
-
     if not ou_dn:
         raise ADServiceError("Target OU DN is empty and no default Users OU DN is configured.")
 
@@ -189,6 +266,7 @@ def _create_user_via_winrm(
     u_phone = _ps_escape_single_quotes(phone)
     u_department = _ps_escape_single_quotes(department)
     u_description = _ps_escape_single_quotes(description)
+    u_hr_id = _ps_escape_single_quotes(hr_id)
     u_ou = _ps_escape_single_quotes(ou_dn)
     u_upn = _ps_escape_single_quotes(upn)
     u_server = _ps_escape_single_quotes(cfg.server_name)
@@ -232,16 +310,17 @@ if ('{u_email}')       {{ $params['EmailAddress'] = '{u_email}' }}
 if ('{u_description}') {{ $params['Description'] = '{u_description}' }}
 if ('{u_department}')  {{ $params['Department'] = '{u_department}' }}
 if ('{u_phone}')       {{ $params['OfficePhone'] = '{u_phone}' }}
+if ('{u_hr_id}')       {{ $params['EmployeeID'] = '{u_hr_id}' }}
 
 New-ADUser @params
 
-$created = Get-ADUser -Identity $username -Server $server -Properties DistinguishedName,Enabled,pwdLastSet
+$created = Get-ADUser -Identity '{u_username}' -Server $server -Properties DistinguishedName,Enabled,pwdLastSet,employeeID
 if (-not $created) {{
     throw "User creation succeeded but could not verify the created user."
 }}
 
 Write-Output ("CREATED_DN=" + $created.DistinguishedName)
-Write-Output ("VERIFY Enabled=" + $created.Enabled + " pwdLastSet=" + $created.pwdLastSet)
+Write-Output ("VERIFY Enabled=" + $created.Enabled + " pwdLastSet=" + $created.pwdLastSet + " employeeID=" + $created.employeeID)
 """
     out = _run_ps(ps)
 
@@ -257,28 +336,66 @@ Write-Output ("VERIFY Enabled=" + $created.Enabled + " pwdLastSet=" + $created.p
     return created_dn
 
 
-def _set_password_via_winrm(user_dn: str, password: str, server: str) -> None:
-    dn = _ps_escape_single_quotes(user_dn)
-    pw = _ps_escape_single_quotes(password)
-    srv = _ps_escape_single_quotes(server)
+def _update_user_via_winrm(cfg: ADConfig, username: str, updates: dict) -> None:
+    username_esc = _ps_escape_single_quotes((username or "").strip())
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+
+    if not username_esc:
+        raise ADServiceError("Username is required.")
+
+    clean_updates = {}
+    for key, value in (updates or {}).items():
+        if value is None or value == "":
+            continue
+        clean_updates[key] = _ps_escape_single_quotes(value)
+
+    if not clean_updates:
+        return
+
+    replace_lines = []
+    for key, value in clean_updates.items():
+        replace_lines.append(f"$replace['{key}'] = '{value}'")
+    replace_block = "\n".join(replace_lines)
 
     ps = f"""
 $ErrorActionPreference = 'Stop'
 Import-Module ActiveDirectory
 
-$sec = ConvertTo-SecureString '{pw}' -AsPlainText -Force
+$user = Get-ADUser -Identity '{username_esc}' -Server '{server_esc}' -ErrorAction Stop
+$replace = @{{}}
+{replace_block}
 
-Set-ADAccountPassword -Identity '{dn}' -Server '{srv}' -Reset -NewPassword $sec
-Enable-ADAccount -Identity '{dn}' -Server '{srv}'
-Set-ADUser -Identity '{dn}' -Server '{srv}' -ChangePasswordAtLogon $true
+Set-ADUser -Identity $user.DistinguishedName -Server '{server_esc}' -Replace $replace
 
-$u = Get-ADUser -Identity '{dn}' -Server '{srv}' -Properties pwdLastSet,Enabled
-Write-Output "VERIFY Enabled=$($u.Enabled) pwdLastSet=$($u.pwdLastSet)"
+$verify = Get-ADUser -Identity $user.DistinguishedName -Server '{server_esc}' -Properties displayName,givenName,sn,mail,telephoneNumber,department,description,employeeID
+Write-Output ("UPDATED_DN=" + $verify.DistinguishedName)
 """
     out = _run_ps(ps)
+    if "UPDATED_DN=" not in out:
+        raise ADServiceError(f"Update executed but verification output not returned. STDOUT={out}")
 
-    if "VERIFY" not in out:
-        raise ADServiceError(f"WinRM executed but no verification output returned. STDOUT={out}")
+
+def _set_user_account_disabled_via_winrm(cfg: ADConfig, username: str, disabled: bool) -> None:
+    username_esc = _ps_escape_single_quotes((username or "").strip())
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+    cmd = "Disable-ADAccount" if disabled else "Enable-ADAccount"
+
+    if not username_esc:
+        raise ADServiceError("Username is required.")
+
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+$user = Get-ADUser -Identity '{username_esc}' -Server '{server_esc}' -ErrorAction Stop
+{cmd} -Identity $user.DistinguishedName -Server '{server_esc}'
+
+$verify = Get-ADUser -Identity $user.DistinguishedName -Server '{server_esc}' -Properties Enabled
+Write-Output ("VERIFY Enabled=" + $verify.Enabled)
+"""
+    out = _run_ps(ps)
+    if "VERIFY Enabled=" not in out:
+        raise ADServiceError(f"Account status update executed but verification output not returned. STDOUT={out}")
 
 
 def _reset_password_via_winrm(cfg: ADConfig, username: str, new_password: str) -> None:
@@ -305,93 +422,40 @@ Write-Output ("VERIFY pwdLastSet=" + $verify.pwdLastSet)
         raise ADServiceError(
             f"Password reset executed but no verification output returned. STDOUT={out}"
         )
-    
-def resolve_ou_name_to_dn(ou_name: str) -> str:
-    """
-    Resolve a friendly OU name like 'HR' to its full DN.
-    Raises ADServiceError if not found or ambiguous.
-    """
-    target = (ou_name or "").strip().lower()
-    if not target:
-        raise ADServiceError("OU name is required.")
-
-    ous = list_ous()
-    matches = [ou for ou in ous if (ou.get("ou") or "").strip().lower() == target]
-
-    if not matches:
-        raise ADServiceError(f"OU not found: {ou_name}")
-
-    if len(matches) > 1:
-        matched_dns = ", ".join(m["dn"] for m in matches)
-        raise ADServiceError(
-            f"OU name '{ou_name}' is ambiguous. Multiple OUs found: {matched_dns}"
-        )
-
-    return matches[0]["dn"]
 
 
-def _get_user_dn(conn: Connection, cfg: ADConfig, username: str) -> Optional[str]:
-    flt = cfg.user_search_filter.format(username=username)
-    entry = _search_one(conn, cfg.base_dn, flt, attributes=["distinguishedName"])
-    if not entry:
-        return None
-    return entry.entry_dn
+def _move_user_via_winrm(cfg: ADConfig, username: str, target_ou_dn: str) -> str:
+    username_esc = _ps_escape_single_quotes((username or "").strip())
+    target_ou_esc = _ps_escape_single_quotes((target_ou_dn or "").strip())
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
 
+    if not username_esc:
+        raise ADServiceError("Username is required.")
+    if not target_ou_esc:
+        raise ADServiceError("Target OU DN is required.")
 
-def _get_computer_dn(conn: Connection, cfg: ADConfig, computer_name: str) -> Optional[str]:
-    sam = _normalize_computer_sam(computer_name)
-    flt = f"(sAMAccountName={sam})"
-    entry = _search_one(conn, cfg.base_dn, flt, attributes=["distinguishedName"])
-    if not entry:
-        return None
-    return entry.entry_dn
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
 
+$user = Get-ADUser -Identity '{username_esc}' -Server '{server_esc}' -Properties DistinguishedName -ErrorAction Stop
+Move-ADObject -Identity $user.DistinguishedName -TargetPath '{target_ou_esc}' -Server '{server_esc}'
 
-def _get_group_dn(conn: Connection, cfg: ADConfig, group_name: str) -> Optional[str]:
-    flt = f"(cn={group_name})"
-    entry = _search_one(conn, cfg.base_dn, flt, attributes=["distinguishedName"])
-    if not entry:
-        return None
-    return entry.entry_dn
+$verify = Get-ADUser -Identity '{username_esc}' -Server '{server_esc}' -Properties DistinguishedName
+Write-Output ("MOVED_DN=" + $verify.DistinguishedName)
+"""
+    out = _run_ps(ps)
 
+    moved_dn = None
+    for line in out.splitlines():
+        if line.startswith("MOVED_DN="):
+            moved_dn = line.split("=", 1)[1].strip()
+            break
 
-def _set_account_disabled(conn: Connection, dn: str, disabled: bool) -> None:
-    conn.search(dn, "(objectClass=*)", search_scope=BASE, attributes=["userAccountControl"])
-    if not conn.entries:
-        raise ADServiceError("Account not found for UAC update.")
+    if not moved_dn:
+        raise ADServiceError(f"Move executed but verification output not returned. STDOUT={out}")
 
-    uac = int(conn.entries[0]["userAccountControl"].value)
-    if disabled:
-        new_uac = uac | 0x2
-    else:
-        new_uac = uac & ~0x2
-
-    conn.modify(dn, {"userAccountControl": [(MODIFY_REPLACE, [new_uac])]})
-    if conn.result["description"] != "success":
-        raise ADServiceError(conn.result.get("message", "Failed to update account status."))
-
-
-def test_connection() -> None:
-    cfg = _load_config()
-    conn = _connect(cfg)
-    conn.unbind()
-
-
-def _resolve_base_dn(conn: Connection, cfg: ADConfig) -> str:
-    if (cfg.base_dn or "").strip():
-        return cfg.base_dn.strip()
-
-    conn.search(
-        search_base="",
-        search_filter="(objectClass=*)",
-        search_scope=BASE,
-        attributes=["defaultNamingContext"],
-        size_limit=1,
-    )
-    if not conn.entries:
-        raise ADServiceError("Cannot read RootDSE (defaultNamingContext). Check bind/permissions.")
-
-    return str(conn.entries[0]["defaultNamingContext"].value)
+    return moved_dn
 
 
 def create_user(
@@ -403,6 +467,7 @@ def create_user(
     phone: str = "",
     department: str = "",
     description: str = "",
+    hr_id: str = "",
     target_ou_dn: Optional[str] = None,
     group_dns: Optional[Iterable[str]] = None,
     must_change_password: bool = False,
@@ -424,6 +489,7 @@ def create_user(
         phone=phone,
         department=department,
         description=description,
+        hr_id=hr_id,
         target_ou_dn=target_ou_dn,
         must_change_password=must_change_password,
         user_cannot_change_password=user_cannot_change_password,
@@ -432,48 +498,22 @@ def create_user(
     )
 
     if group_dns:
-        conn = _connect(cfg)
-        try:
-            for group_dn in group_dns:
-                group_dn = (group_dn or "").strip()
-                if not group_dn:
-                    continue
-
-                conn.modify(group_dn, {"member": [(MODIFY_ADD, [user_dn])]})
-                if conn.result["description"] != "success":
-                    raise ADServiceError(
-                        conn.result.get("message", f"Failed adding user to group: {group_dn}")
-                    )
-        finally:
-            conn.unbind()
+        add_user_to_groups(user_dn, group_dns)
 
     return user_dn
 
 
-def add_user_to_groups(user_dn: str, group_dns: Iterable[str]) -> None:
+def update_user(username: str, updates: dict) -> None:
     cfg = _load_config()
     if cfg.safe_mode:
         return
-
-    conn = _connect(cfg)
-    try:
-        for group_dn in group_dns:
-            group_dn = (group_dn or "").strip()
-            if not group_dn:
-                continue
-
-            conn.modify(group_dn, {"member": [(MODIFY_ADD, [user_dn])]})
-            if conn.result["description"] != "success":
-                raise ADServiceError(conn.result.get("message", f"Failed adding to group {group_dn}"))
-    finally:
-        conn.unbind()
+    _update_user_via_winrm(cfg, username, updates)
 
 
 def reset_user_password(username: str, new_password: str) -> None:
     cfg = _load_config()
     if cfg.safe_mode:
         return
-
     _reset_password_via_winrm(cfg, username, new_password)
 
 
@@ -481,69 +521,14 @@ def lock_user(username: str) -> None:
     cfg = _load_config()
     if cfg.safe_mode:
         return
-
-    conn = _connect(cfg)
-    try:
-        dn = _get_user_dn(conn, cfg, username)
-        if not dn:
-            raise ADServiceError("User not found.")
-        _set_account_disabled(conn, dn, True)
-    finally:
-        conn.unbind()
+    _set_user_account_disabled_via_winrm(cfg, username, True)
 
 
 def unlock_user(username: str) -> None:
     cfg = _load_config()
     if cfg.safe_mode:
         return
-
-    conn = _connect(cfg)
-    try:
-        dn = _get_user_dn(conn, cfg, username)
-        if not dn:
-            raise ADServiceError("User not found.")
-        _set_account_disabled(conn, dn, False)
-    finally:
-        conn.unbind()
-
-
-def _move_user_via_winrm(cfg: ADConfig, username: str, target_ou_dn: str) -> str:
-    username_esc = _ps_escape_single_quotes((username or "").strip())
-    target_ou_esc = _ps_escape_single_quotes((target_ou_dn or "").strip())
-    server_esc = _ps_escape_single_quotes(cfg.server_name)
-
-    if not username_esc:
-        raise ADServiceError("Username is required.")
-
-    if not target_ou_esc:
-        raise ADServiceError("Target OU DN is required.")
-
-    ps = f"""
-$ErrorActionPreference = 'Stop'
-Import-Module ActiveDirectory
-
-$user = Get-ADUser -Identity '{username_esc}' -Server '{server_esc}' -Properties DistinguishedName
-if (-not $user) {{
-    throw "User not found: {username_esc}"
-}}
-
-Move-ADObject -Identity $user.DistinguishedName -TargetPath '{target_ou_esc}' -Server '{server_esc}'
-
-$verify = Get-ADUser -Identity '{username_esc}' -Server '{server_esc}' -Properties DistinguishedName
-Write-Output ("MOVED_DN=" + $verify.DistinguishedName)
-"""
-    out = _run_ps(ps)
-
-    moved_dn = None
-    for line in out.splitlines():
-        if line.startswith("MOVED_DN="):
-            moved_dn = line.split("=", 1)[1].strip()
-            break
-
-    if not moved_dn:
-        raise ADServiceError(f"Move executed but verification output not returned. STDOUT={out}")
-
-    return moved_dn
+    _set_user_account_disabled_via_winrm(cfg, username, False)
 
 
 def move_user(username: str, target_ou_dn: str) -> str:
@@ -558,130 +543,9 @@ def move_user(username: str, target_ou_dn: str) -> str:
     return _move_user_via_winrm(cfg, username, target_ou_dn)
 
 
-def update_user(username: str, updates: dict) -> None:
-    cfg = _load_config()
-    if cfg.safe_mode:
-        return
-
-    conn = _connect(cfg)
-    try:
-        dn = _get_user_dn(conn, cfg, username)
-        if not dn:
-            raise ADServiceError("User not found.")
-
-        changes = {}
-        for key, value in updates.items():
-            if value is None or value == "":
-                continue
-            changes[key] = [(MODIFY_REPLACE, [value])]
-
-        if not changes:
-            return
-
-        conn.modify(dn, changes)
-        if conn.result["description"] != "success":
-            raise ADServiceError(conn.result.get("message", "Failed to update user."))
-    finally:
-        conn.unbind()
-
-
-def create_computer(computer_name: str, ou_dn: Optional[str] = None, description: str = "") -> None:
-    cfg = _load_config()
-    if cfg.safe_mode:
-        return
-
-    conn = _connect(cfg)
-    try:
-        sam = _normalize_computer_sam(computer_name)
-        target_ou = ou_dn or cfg.computers_ou_dn
-        dn = f"CN={computer_name},{target_ou}"
-        attrs = {
-            "objectClass": ["top", "computer"],
-            "sAMAccountName": sam,
-        }
-        if description:
-            attrs["description"] = description
-
-        if not conn.add(dn, attributes=attrs):
-            raise ADServiceError(conn.result.get("message", "Failed to create computer."))
-    finally:
-        conn.unbind()
-
-
-def lock_computer(computer_name: str) -> None:
-    cfg = _load_config()
-    if cfg.safe_mode:
-        return
-
-    conn = _connect(cfg)
-    try:
-        dn = _get_computer_dn(conn, cfg, computer_name)
-        if not dn:
-            raise ADServiceError("Computer not found.")
-        _set_account_disabled(conn, dn, True)
-    finally:
-        conn.unbind()
-
-
-def unlock_computer(computer_name: str) -> None:
-    cfg = _load_config()
-    if cfg.safe_mode:
-        return
-
-    conn = _connect(cfg)
-    try:
-        dn = _get_computer_dn(conn, cfg, computer_name)
-        if not dn:
-            raise ADServiceError("Computer not found.")
-        _set_account_disabled(conn, dn, False)
-    finally:
-        conn.unbind()
-
-
-def move_computer(computer_name: str, target_ou_dn: str) -> None:
-    cfg = _load_config()
-    if cfg.safe_mode:
-        return
-
-    conn = _connect(cfg)
-    try:
-        dn = _get_computer_dn(conn, cfg, computer_name)
-        if not dn:
-            raise ADServiceError("Computer not found.")
-        rdn = dn.split(",", 1)[0]
-        conn.modify_dn(dn, rdn, new_superior=target_ou_dn)
-        if conn.result["description"] != "success":
-            raise ADServiceError(conn.result.get("message", "Failed to move computer."))
-    finally:
-        conn.unbind()
-
-
-def update_computer(computer_name: str, updates: dict) -> None:
-    cfg = _load_config()
-    if cfg.safe_mode:
-        return
-
-    conn = _connect(cfg)
-    try:
-        dn = _get_computer_dn(conn, cfg, computer_name)
-        if not dn:
-            raise ADServiceError("Computer not found.")
-
-        changes = {}
-        for key, value in updates.items():
-            if value is None or value == "":
-                continue
-            changes[key] = [(MODIFY_REPLACE, [value])]
-
-        if not changes:
-            return
-
-        conn.modify(dn, changes)
-        if conn.result["description"] != "success":
-            raise ADServiceError(conn.result.get("message", "Failed to update computer."))
-    finally:
-        conn.unbind()
-
+# -----------------------------
+# Group operations via WinRM
+# -----------------------------
 
 def create_group(
     group_name: str,
@@ -692,34 +556,72 @@ def create_group(
     if cfg.safe_mode:
         return
 
-    conn = _connect(cfg)
-    try:
-        dn = f"CN={group_name},{cfg.groups_ou_dn}"
-        attrs = {
-            "objectClass": ["top", "group"],
-            "sAMAccountName": group_name,
-            "cn": group_name,
-            "groupType": -2147483646,
-        }
-        if description:
-            attrs["description"] = description
+    group_name_esc = _ps_escape_single_quotes(group_name)
+    description_esc = _ps_escape_single_quotes(description)
+    path_esc = _ps_escape_single_quotes(cfg.groups_ou_dn)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
 
-        if not conn.add(dn, attributes=attrs):
-            raise ADServiceError(conn.result.get("message", "Failed to create group."))
+    member_items = []
+    for m in members or []:
+        value = str(m).strip()
+        if value:
+            member_items.append(f"'{_ps_escape_single_quotes(value)}'")
+    members_block = ", ".join(member_items) if member_items else ""
 
-        if members:
-            member_dns = []
-            for m in members:
-                dn_m = _get_user_dn(conn, cfg, m) or _get_computer_dn(conn, cfg, m)
-                if dn_m:
-                    member_dns.append(dn_m)
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
 
-            if member_dns:
-                conn.modify(dn, {"member": [(MODIFY_ADD, member_dns)]})
-                if conn.result["description"] != "success":
-                    raise ADServiceError(conn.result.get("message", "Failed to add initial members."))
-    finally:
-        conn.unbind()
+$existing = Get-ADGroup -LDAPFilter "(cn={group_name_esc})" -Server '{server_esc}' -ErrorAction SilentlyContinue
+if ($existing) {{
+    throw "Group already exists: $($existing.DistinguishedName)"
+}}
+
+$params = @{{
+    Name           = '{group_name_esc}'
+    SamAccountName = '{group_name_esc}'
+    GroupScope     = 'Global'
+    GroupCategory  = 'Security'
+    Path           = '{path_esc}'
+    Server         = '{server_esc}'
+}}
+
+if ('{description_esc}') {{ $params['Description'] = '{description_esc}' }}
+
+New-ADGroup @params
+
+$group = Get-ADGroup -Identity '{group_name_esc}' -Server '{server_esc}' -Properties DistinguishedName
+if (-not $group) {{
+    throw "Group creation succeeded but could not verify the created group."
+}}
+
+Write-Output ("CREATED_DN=" + $group.DistinguishedName)
+
+if (@({members_block}).Count -gt 0) {{
+    $resolvedMembers = @()
+    foreach ($m in @({members_block})) {{
+        $u = Get-ADUser -Identity $m -Server '{server_esc}' -ErrorAction SilentlyContinue
+        if ($u) {{
+            $resolvedMembers += $u.DistinguishedName
+            continue
+        }}
+
+        $c = Get-ADComputer -Identity $m -Server '{server_esc}' -ErrorAction SilentlyContinue
+        if ($c) {{
+            $resolvedMembers += $c.DistinguishedName
+            continue
+        }}
+    }}
+
+    if ($resolvedMembers.Count -gt 0) {{
+        Add-ADGroupMember -Identity $group.DistinguishedName -Members $resolvedMembers -Server '{server_esc}'
+        Write-Output "MEMBERS_ADDED=1"
+    }}
+}}
+"""
+    out = _run_ps(ps)
+    if "CREATED_DN=" not in out:
+        raise ADServiceError(f"Group create executed but verification output not returned. STDOUT={out}")
 
 
 def update_group(
@@ -732,45 +634,60 @@ def update_group(
     if cfg.safe_mode:
         return
 
-    conn = _connect(cfg)
-    try:
-        dn = _get_group_dn(conn, cfg, group_name)
-        if not dn:
-            raise ADServiceError("Group not found.")
+    group_name_esc = _ps_escape_single_quotes(group_name)
+    description_esc = _ps_escape_single_quotes(description)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
 
-        if description:
-            conn.modify(dn, {"description": [(MODIFY_REPLACE, [description])]})
-            if conn.result["description"] != "success":
-                raise ADServiceError(conn.result.get("message", "Failed to update group description."))
+    add_items = [f"'{_ps_escape_single_quotes(str(m).strip())}'" for m in (add_members or []) if str(m).strip()]
+    remove_items = [f"'{_ps_escape_single_quotes(str(m).strip())}'" for m in (remove_members or []) if str(m).strip()]
+    add_block = ", ".join(add_items) if add_items else ""
+    remove_block = ", ".join(remove_items) if remove_items else ""
 
-        add_members = add_members or []
-        remove_members = remove_members or []
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
 
-        if add_members:
-            member_dns = []
-            for m in add_members:
-                dn_m = _get_user_dn(conn, cfg, m) or _get_computer_dn(conn, cfg, m)
-                if dn_m:
-                    member_dns.append(dn_m)
+$group = Get-ADGroup -Identity '{group_name_esc}' -Server '{server_esc}' -ErrorAction Stop
 
-            if member_dns:
-                conn.modify(dn, {"member": [(MODIFY_ADD, member_dns)]})
-                if conn.result["description"] != "success":
-                    raise ADServiceError(conn.result.get("message", "Failed adding group members."))
+if ('{description_esc}') {{
+    Set-ADGroup -Identity $group.DistinguishedName -Server '{server_esc}' -Description '{description_esc}'
+}}
 
-        if remove_members:
-            member_dns = []
-            for m in remove_members:
-                dn_m = _get_user_dn(conn, cfg, m) or _get_computer_dn(conn, cfg, m)
-                if dn_m:
-                    member_dns.append(dn_m)
+foreach ($m in @({add_block})) {{
+    if (-not $m) {{ continue }}
 
-            if member_dns:
-                conn.modify(dn, {"member": [(MODIFY_DELETE, member_dns)]})
-                if conn.result["description"] != "success":
-                    raise ADServiceError(conn.result.get("message", "Failed removing group members."))
-    finally:
-        conn.unbind()
+    $u = Get-ADUser -Identity $m -Server '{server_esc}' -ErrorAction SilentlyContinue
+    if ($u) {{
+        Add-ADGroupMember -Identity $group.DistinguishedName -Members $u.DistinguishedName -Server '{server_esc}'
+        continue
+    }}
+
+    $c = Get-ADComputer -Identity $m -Server '{server_esc}' -ErrorAction SilentlyContinue
+    if ($c) {{
+        Add-ADGroupMember -Identity $group.DistinguishedName -Members $c.DistinguishedName -Server '{server_esc}'
+    }}
+}}
+
+foreach ($m in @({remove_block})) {{
+    if (-not $m) {{ continue }}
+
+    $u = Get-ADUser -Identity $m -Server '{server_esc}' -ErrorAction SilentlyContinue
+    if ($u) {{
+        Remove-ADGroupMember -Identity $group.DistinguishedName -Members $u.DistinguishedName -Server '{server_esc}' -Confirm:$false
+        continue
+    }}
+
+    $c = Get-ADComputer -Identity $m -Server '{server_esc}' -ErrorAction SilentlyContinue
+    if ($c) {{
+        Remove-ADGroupMember -Identity $group.DistinguishedName -Members $c.DistinguishedName -Server '{server_esc}' -Confirm:$false
+    }}
+}}
+
+Write-Output ("UPDATED_DN=" + $group.DistinguishedName)
+"""
+    out = _run_ps(ps)
+    if "UPDATED_DN=" not in out:
+        raise ADServiceError(f"Group update executed but verification output not returned. STDOUT={out}")
 
 
 def delete_group(group_name: str) -> None:
@@ -778,16 +695,20 @@ def delete_group(group_name: str) -> None:
     if cfg.safe_mode:
         return
 
-    conn = _connect(cfg)
-    try:
-        dn = _get_group_dn(conn, cfg, group_name)
-        if not dn:
-            raise ADServiceError("Group not found.")
+    group_name_esc = _ps_escape_single_quotes(group_name)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
 
-        if not conn.delete(dn):
-            raise ADServiceError(conn.result.get("message", "Failed to delete group."))
-    finally:
-        conn.unbind()
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+$group = Get-ADGroup -Identity '{group_name_esc}' -Server '{server_esc}' -ErrorAction Stop
+Remove-ADGroup -Identity $group.DistinguishedName -Server '{server_esc}' -Confirm:$false
+Write-Output "DELETED=1"
+"""
+    out = _run_ps(ps)
+    if "DELETED=1" not in out:
+        raise ADServiceError(f"Group delete executed but verification output not returned. STDOUT={out}")
 
 
 def move_group(group_name: str, target_ou_dn: str) -> None:
@@ -795,89 +716,244 @@ def move_group(group_name: str, target_ou_dn: str) -> None:
     if cfg.safe_mode:
         return
 
-    conn = _connect(cfg)
-    try:
-        dn = _get_group_dn(conn, cfg, group_name)
-        if not dn:
-            raise ADServiceError("Group not found.")
+    group_name_esc = _ps_escape_single_quotes(group_name)
+    target_ou_esc = _ps_escape_single_quotes(target_ou_dn)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
 
-        rdn = dn.split(",", 1)[0]
-        conn.modify_dn(dn, rdn, new_superior=target_ou_dn)
-        if conn.result["description"] != "success":
-            raise ADServiceError(conn.result.get("message", "Failed to move group."))
-    finally:
-        conn.unbind()
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+$group = Get-ADGroup -Identity '{group_name_esc}' -Server '{server_esc}' -Properties DistinguishedName -ErrorAction Stop
+Move-ADObject -Identity $group.DistinguishedName -TargetPath '{target_ou_esc}' -Server '{server_esc}'
+Write-Output "MOVED=1"
+"""
+    out = _run_ps(ps)
+    if "MOVED=1" not in out:
+        raise ADServiceError(f"Group move executed but verification output not returned. STDOUT={out}")
 
 
 def add_group_members(group_name: str, members: Iterable[str]) -> None:
-    cfg = _load_config()
-    if cfg.safe_mode:
-        return
-
-    conn = _connect(cfg)
-    try:
-        dn = _get_group_dn(conn, cfg, group_name)
-        if not dn:
-            raise ADServiceError("Group not found.")
-
-        member_dns = []
-        for m in members:
-            dn_m = _get_user_dn(conn, cfg, m) or _get_computer_dn(conn, cfg, m)
-            if dn_m:
-                member_dns.append(dn_m)
-
-        if member_dns:
-            conn.modify(dn, {"member": [(MODIFY_ADD, member_dns)]})
-            if conn.result["description"] != "success":
-                raise ADServiceError(conn.result.get("message", "Failed adding group members."))
-    finally:
-        conn.unbind()
+    update_group(group_name=group_name, add_members=members)
 
 
 def remove_group_members(group_name: str, members: Iterable[str]) -> None:
+    update_group(group_name=group_name, remove_members=members)
+
+
+def add_user_to_groups(user_dn: str, group_dns: Iterable[str]) -> None:
     cfg = _load_config()
     if cfg.safe_mode:
         return
 
-    conn = _connect(cfg)
-    try:
-        dn = _get_group_dn(conn, cfg, group_name)
-        if not dn:
-            raise ADServiceError("Group not found.")
+    user_dn_esc = _ps_escape_single_quotes(user_dn)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+    group_items = [f"'{_ps_escape_single_quotes(str(g).strip())}'" for g in group_dns if str(g).strip()]
+    group_block = ", ".join(group_items)
 
-        member_dns = []
-        for m in members:
-            dn_m = _get_user_dn(conn, cfg, m) or _get_computer_dn(conn, cfg, m)
-            if dn_m:
-                member_dns.append(dn_m)
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
 
-        if member_dns:
-            conn.modify(dn, {"member": [(MODIFY_DELETE, member_dns)]})
-            if conn.result["description"] != "success":
-                raise ADServiceError(conn.result.get("message", "Failed removing group members."))
-    finally:
-        conn.unbind()
+$userDn = '{user_dn_esc}'
+foreach ($groupDn in @({group_block})) {{
+    if (-not $groupDn) {{ continue }}
+    Add-ADGroupMember -Identity $groupDn -Members $userDn -Server '{server_esc}'
+}}
+Write-Output "GROUPS_DONE=1"
+"""
+    out = _run_ps(ps)
+    if "GROUPS_DONE=1" not in out:
+        raise ADServiceError(f"Group membership update executed but verification output not returned. STDOUT={out}")
 
+
+# -----------------------------
+# Computer operations via WinRM
+# -----------------------------
+
+def create_computer(computer_name: str, ou_dn: Optional[str] = None, description: str = "") -> None:
+    cfg = _load_config()
+    if cfg.safe_mode:
+        return
+
+    name = (computer_name or "").strip()
+    if not name:
+        raise ADServiceError("Computer name is required.")
+
+    target_ou = (ou_dn or "").strip() or cfg.computers_ou_dn
+    if not target_ou:
+        raise ADServiceError("Target OU DN is required.")
+
+    name_esc = _ps_escape_single_quotes(name)
+    ou_esc = _ps_escape_single_quotes(target_ou)
+    desc_esc = _ps_escape_single_quotes(description)
+    sam_esc = _ps_escape_single_quotes(_normalize_computer_sam(name))
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+$existing = Get-ADComputer -Identity '{name_esc}' -Server '{server_esc}' -ErrorAction SilentlyContinue
+if ($existing) {{
+    throw "Computer already exists: $($existing.DistinguishedName)"
+}}
+
+$params = @{{
+    Name           = '{name_esc}'
+    SamAccountName = '{sam_esc}'
+    Path           = '{ou_esc}'
+    Server         = '{server_esc}'
+}}
+
+if ('{desc_esc}') {{ $params['Description'] = '{desc_esc}' }}
+
+New-ADComputer @params
+
+$verify = Get-ADComputer -Identity '{name_esc}' -Server '{server_esc}' -Properties DistinguishedName
+Write-Output ("CREATED_DN=" + $verify.DistinguishedName)
+"""
+    out = _run_ps(ps)
+    if "CREATED_DN=" not in out:
+        raise ADServiceError(f"Computer create executed but verification output not returned. STDOUT={out}")
+
+
+def lock_computer(computer_name: str) -> None:
+    cfg = _load_config()
+    if cfg.safe_mode:
+        return
+
+    name_esc = _ps_escape_single_quotes(computer_name)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+$computer = Get-ADComputer -Identity '{name_esc}' -Server '{server_esc}' -ErrorAction Stop
+Disable-ADAccount -Identity $computer.DistinguishedName -Server '{server_esc}'
+Write-Output "LOCKED=1"
+"""
+    out = _run_ps(ps)
+    if "LOCKED=1" not in out:
+        raise ADServiceError(f"Computer lock executed but verification output not returned. STDOUT={out}")
+
+
+def unlock_computer(computer_name: str) -> None:
+    cfg = _load_config()
+    if cfg.safe_mode:
+        return
+
+    name_esc = _ps_escape_single_quotes(computer_name)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+$computer = Get-ADComputer -Identity '{name_esc}' -Server '{server_esc}' -ErrorAction Stop
+Enable-ADAccount -Identity $computer.DistinguishedName -Server '{server_esc}'
+Write-Output "UNLOCKED=1"
+"""
+    out = _run_ps(ps)
+    if "UNLOCKED=1" not in out:
+        raise ADServiceError(f"Computer unlock executed but verification output not returned. STDOUT={out}")
+
+
+def move_computer(computer_name: str, target_ou_dn: str) -> None:
+    cfg = _load_config()
+    if cfg.safe_mode:
+        return
+
+    name_esc = _ps_escape_single_quotes(computer_name)
+    target_ou_esc = _ps_escape_single_quotes(target_ou_dn)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+$computer = Get-ADComputer -Identity '{name_esc}' -Server '{server_esc}' -Properties DistinguishedName -ErrorAction Stop
+Move-ADObject -Identity $computer.DistinguishedName -TargetPath '{target_ou_esc}' -Server '{server_esc}'
+Write-Output "MOVED=1"
+"""
+    out = _run_ps(ps)
+    if "MOVED=1" not in out:
+        raise ADServiceError(f"Computer move executed but verification output not returned. STDOUT={out}")
+
+
+def update_computer(computer_name: str, updates: dict) -> None:
+    cfg = _load_config()
+    if cfg.safe_mode:
+        return
+
+    name_esc = _ps_escape_single_quotes(computer_name)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+
+    clean_updates = {}
+    for key, value in (updates or {}).items():
+        if value is None or value == "":
+            continue
+        clean_updates[key] = _ps_escape_single_quotes(value)
+
+    if not clean_updates:
+        return
+
+    replace_lines = []
+    for key, value in clean_updates.items():
+        replace_lines.append(f"$replace['{key}'] = '{value}'")
+    replace_block = "\n".join(replace_lines)
+
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+$computer = Get-ADComputer -Identity '{name_esc}' -Server '{server_esc}' -ErrorAction Stop
+$replace = @{{}}
+{replace_block}
+
+Set-ADComputer -Identity $computer.DistinguishedName -Server '{server_esc}' -Replace $replace
+Write-Output "UPDATED=1"
+"""
+    out = _run_ps(ps)
+    if "UPDATED=1" not in out:
+        raise ADServiceError(f"Computer update executed but verification output not returned. STDOUT={out}")
+
+
+# -----------------------------
+# OU operations via WinRM
+# -----------------------------
 
 def create_ou(ou_name: str, parent_dn: str, description: str = "", protect: bool = False) -> None:
     cfg = _load_config()
     if cfg.safe_mode:
         return
 
-    conn = _connect(cfg)
-    try:
-        dn = f"OU={ou_name},{parent_dn or cfg.base_dn}"
-        attrs = {"objectClass": ["top", "organizationalUnit"]}
-        if description:
-            attrs["description"] = description
+    ou_name_esc = _ps_escape_single_quotes(ou_name)
+    parent_esc = _ps_escape_single_quotes(parent_dn or cfg.base_dn)
+    description_esc = _ps_escape_single_quotes(description)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+    ps_protect = "$true" if protect else "$false"
 
-        if not conn.add(dn, attributes=attrs):
-            raise ADServiceError(conn.result.get("message", "Failed to create OU."))
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
 
-        if protect:
-            pass
-    finally:
-        conn.unbind()
+$params = @{{
+    Name   = '{ou_name_esc}'
+    Path   = '{parent_esc}'
+    Server = '{server_esc}'
+}}
+
+if ('{description_esc}') {{ $params['Description'] = '{description_esc}' }}
+$params['ProtectedFromAccidentalDeletion'] = {ps_protect}
+
+New-ADOrganizationalUnit @params
+Write-Output "CREATED=1"
+"""
+    out = _run_ps(ps)
+    if "CREATED=1" not in out:
+        raise ADServiceError(f"OU create executed but verification output not returned. STDOUT={out}")
 
 
 def update_ou(ou_dn: str, new_name: str = "", description: str = "", protect: bool = False) -> None:
@@ -885,27 +961,35 @@ def update_ou(ou_dn: str, new_name: str = "", description: str = "", protect: bo
     if cfg.safe_mode:
         return
 
-    conn = _connect(cfg)
-    try:
-        current_dn = ou_dn
+    ou_dn_esc = _ps_escape_single_quotes(ou_dn)
+    new_name_esc = _ps_escape_single_quotes(new_name)
+    description_esc = _ps_escape_single_quotes(description)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+    ps_protect = "$true" if protect else "$false"
 
-        if new_name:
-            conn.modify_dn(ou_dn, f"OU={new_name}")
-            if conn.result["description"] != "success":
-                raise ADServiceError(conn.result.get("message", "Failed to rename OU."))
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
 
-            parent = ou_dn.split(",", 1)[1] if "," in ou_dn else ""
-            current_dn = f"OU={new_name},{parent}" if parent else f"OU={new_name}"
+$targetDn = '{ou_dn_esc}'
 
-        if description:
-            conn.modify(current_dn, {"description": [(MODIFY_REPLACE, [description])]})
-            if conn.result["description"] != "success":
-                raise ADServiceError(conn.result.get("message", "Failed to update OU description."))
+if ('{new_name_esc}') {{
+    Rename-ADObject -Identity $targetDn -NewName '{new_name_esc}' -Server '{server_esc}'
+    $obj = Get-ADObject -Identity $targetDn -Server '{server_esc}' -Properties DistinguishedName
+    $parentDn = $obj.DistinguishedName.Split(',', 2)[1]
+    $targetDn = "OU={new_name_esc}," + $parentDn
+}}
 
-        if protect:
-            pass
-    finally:
-        conn.unbind()
+if ('{description_esc}') {{
+    Set-ADOrganizationalUnit -Identity $targetDn -Server '{server_esc}' -Description '{description_esc}'
+}}
+
+Set-ADOrganizationalUnit -Identity $targetDn -Server '{server_esc}' -ProtectedFromAccidentalDeletion {ps_protect}
+Write-Output ("UPDATED_DN=" + $targetDn)
+"""
+    out = _run_ps(ps)
+    if "UPDATED_DN=" not in out:
+        raise ADServiceError(f"OU update executed but verification output not returned. STDOUT={out}")
 
 
 def delete_ou(ou_dn: str) -> None:
@@ -913,12 +997,20 @@ def delete_ou(ou_dn: str) -> None:
     if cfg.safe_mode:
         return
 
-    conn = _connect(cfg)
-    try:
-        if not conn.delete(ou_dn):
-            raise ADServiceError(conn.result.get("message", "Failed to delete OU."))
-    finally:
-        conn.unbind()
+    ou_dn_esc = _ps_escape_single_quotes(ou_dn)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+Set-ADOrganizationalUnit -Identity '{ou_dn_esc}' -Server '{server_esc}' -ProtectedFromAccidentalDeletion $false -ErrorAction SilentlyContinue
+Remove-ADOrganizationalUnit -Identity '{ou_dn_esc}' -Server '{server_esc}' -Recursive -Confirm:$false
+Write-Output "DELETED=1"
+"""
+    out = _run_ps(ps)
+    if "DELETED=1" not in out:
+        raise ADServiceError(f"OU delete executed but verification output not returned. STDOUT={out}")
 
 
 def move_ou(ou_dn: str, target_parent_dn: str) -> None:
@@ -926,15 +1018,25 @@ def move_ou(ou_dn: str, target_parent_dn: str) -> None:
     if cfg.safe_mode:
         return
 
-    conn = _connect(cfg)
-    try:
-        rdn = ou_dn.split(",", 1)[0]
-        conn.modify_dn(ou_dn, rdn, new_superior=target_parent_dn)
-        if conn.result["description"] != "success":
-            raise ADServiceError(conn.result.get("message", "Failed to move OU."))
-    finally:
-        conn.unbind()
+    ou_dn_esc = _ps_escape_single_quotes(ou_dn)
+    target_parent_esc = _ps_escape_single_quotes(target_parent_dn)
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
 
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+
+Move-ADObject -Identity '{ou_dn_esc}' -TargetPath '{target_parent_esc}' -Server '{server_esc}'
+Write-Output "MOVED=1"
+"""
+    out = _run_ps(ps)
+    if "MOVED=1" not in out:
+        raise ADServiceError(f"OU move executed but verification output not returned. STDOUT={out}")
+
+
+# -----------------------------
+# LDAP read-only operations
+# -----------------------------
 
 def get_ad_counts() -> dict:
     cfg = _load_config()
@@ -969,7 +1071,7 @@ def list_users(limit: int = 200) -> List[dict]:
             cfg.base_dn,
             "(&(objectClass=user)(!(objectClass=computer)))",
             search_scope=SUBTREE,
-            attributes=["sAMAccountName", "displayName", "mail"],
+            attributes=["sAMAccountName", "displayName", "mail", "employeeID"],
             size_limit=limit,
         )
         return [
@@ -977,6 +1079,7 @@ def list_users(limit: int = 200) -> List[dict]:
                 "username": str(e.sAMAccountName.value) if "sAMAccountName" in e else "",
                 "display_name": str(e.displayName.value) if "displayName" in e else "",
                 "email": str(e.mail.value) if "mail" in e else "",
+                "hr_id": str(e.employeeID.value) if "employeeID" in e else "",
             }
             for e in conn.entries
         ]

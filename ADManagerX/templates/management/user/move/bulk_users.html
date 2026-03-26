@@ -16,7 +16,7 @@
           <p class="card-description">
             Upload an Excel file to move multiple users at once.
           </p>
-          <small class="text-muted">Expected columns: username, target_ou</small>
+          <small class="text-muted">Expected columns: username, ou_name</small>
 
           <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
@@ -25,7 +25,7 @@
               <input type="file" name="file" id="file" accept=".xlsx" class="form-control" required>
             </div>
             <button type="submit" class="btn btn-secondary mt-3">Upload</button>
-            <a href="{% static 'assets/samples/bulk_move_users_template.xlsx' %}" class="btn btn-outline-secondary mt-3 ml-2">
+            <a href="{% static 'assets/samples/bulk_move_users_sample.xlsx' %}" class="btn btn-outline-secondary mt-3 ml-2">
               Download Sample File
             </a>
           </form>

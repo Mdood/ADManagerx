@@ -4,10 +4,11 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-5 bg-white">
   {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
   <div class="row">
     <div class="col-md-8 offset-md-2 grid-margin stretch-card">
       <div class="card shadow border-0">
@@ -15,43 +16,107 @@
           <h4 class="card-title">Update Single User</h4>
           <p class="card-description">Update selected attributes for a user.</p>
 
-          <form method="post">
+          <form method="post" autocomplete="off">
             {% csrf_token %}
+
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label class="form-label font-weight-bold">Username <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" name="username" required>
+                <label class="form-label font-weight-bold">
+                  Username <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="username"
+                  value="{{ request.POST.username|default:'' }}"
+                  required
+                >
               </div>
+
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Display Name</label>
-                <input type="text" class="form-control" name="display_name">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="display_name"
+                  value="{{ request.POST.display_name|default:'' }}"
+                >
               </div>
+
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">First Name</label>
-                <input type="text" class="form-control" name="first_name">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="first_name"
+                  value="{{ request.POST.first_name|default:'' }}"
+                >
               </div>
+
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Last Name</label>
-                <input type="text" class="form-control" name="last_name">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="last_name"
+                  value="{{ request.POST.last_name|default:'' }}"
+                >
               </div>
+
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Email</label>
-                <input type="email" class="form-control" name="email">
+                <input
+                  type="email"
+                  class="form-control"
+                  name="email"
+                  value="{{ request.POST.email|default:'' }}"
+                >
               </div>
+
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Phone</label>
-                <input type="text" class="form-control" name="phone">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="phone"
+                  value="{{ request.POST.phone|default:'' }}"
+                >
               </div>
+
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Department</label>
-                <input type="text" class="form-control" name="department">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="department"
+                  value="{{ request.POST.department|default:'' }}"
+                >
               </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label font-weight-bold">HR ID</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="hr_id"
+                  placeholder="Enter HR ID"
+                  value="{{ request.POST.hr_id|default:'' }}"
+                >
+              </div>
+
               <div class="col-md-12 mb-3">
                 <label class="form-label font-weight-bold">Description</label>
-                <textarea class="form-control" name="description" rows="2"></textarea>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="2"
+                >{{ request.POST.description|default:'' }}</textarea>
               </div>
             </div>
-            <button type="submit" class="btn btn-warning">Update User</button>
+
+            <button type="submit" class="btn btn-warning">
+              Update User
+            </button>
           </form>
 
         </div>
