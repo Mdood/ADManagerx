@@ -3,6 +3,11 @@
 
 {% block content %}
 <div class="content-wrapper mt-5 pt-5 bg-white">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
   <div class="row">
     <div class="col-md-6 offset-md-3 grid-margin stretch-card">
       <div class="card shadow border-0">
@@ -11,14 +16,28 @@
           <p class="card-description">Move a group to a different OU.</p>
           <form method="post">
             {% csrf_token %}
-            <div class="form-group">
-              <label>Group Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" name="group_name" required>
-            </div>
-            <div class="form-group">
-              <label>Target OU DN <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" name="target_ou" required>
-            </div>
+            <div class="col-md-12 mb-3">
+                <label class="form-label font-weight-bold">
+                  Group Name <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="group_name"
+                  id="group_name"
+                  placeholder="Enter group name"
+                  required
+                >
+              </div>
+            <div class="col-md-12 mb-3">
+                <label class="form-label font-weight-bold">OU</label>
+                <select class="form-control" name="target_ou_dn" id="target_ou_dn">
+                  <option value="">Default OU</option>
+                  {% for ou in ous %}
+                    <option value="{{ ou.DistinguishedName }}">{{ ou.DistinguishedName }}</option>
+                  {% endfor %}
+                </select>
+              </div>
             <button type="submit" class="btn btn-secondary">Move Group</button>
           </form>
         </div>

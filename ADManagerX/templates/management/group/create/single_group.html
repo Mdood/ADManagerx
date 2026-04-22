@@ -2,40 +2,191 @@
 {% load static %}
 
 {% block content %}
-<div class="content-wrapper mt-5 pt-5 bg-white d-flex p-2">
-  <div class="row justify-content-center">
-    <div class="col-lg-8 col-md-10">
+<div class="content-wrapper mt-5 pt-5 bg-white">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+  <div class="row">
+    <div class="col-md-10 offset-md-1 grid-margin stretch-card">
       <div class="card shadow border-0">
         <div class="card-header bg-primary text-white d-flex align-items-center">
           <i class="mdi mdi-account-group mr-2" style="font-size: 1.5rem;"></i>
           <h4 class="mb-0 ml-2">Create New Group</h4>
         </div>
+
         <div class="card-body p-4">
-          <form method="post" autocomplete="off">
+          <form method="post" autocomplete="off" id="group-form">
             {% csrf_token %}
+
             <div class="row">
-              <!-- Group Name -->
-              <div class="col-md-12 mb-3">
-                <label class="form-label font-weight-bold">Group Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" name="group_name" placeholder="Enter group name" required>
+              <div class="col-md-6 mb-3">
+                <label class="form-label font-weight-bold">
+                  Group Name <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="group_name"
+                  id="group_name"
+                  placeholder="Enter group name"
+                  required
+                >
               </div>
 
-              <!-- Description -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label font-weight-bold">OU</label>
+                <select class="form-control" name="ou_dn" id="ou_dn">
+                  <option value="">Default OU</option>
+                  {% for ou in ous %}
+                    <option value="{{ ou.DistinguishedName }}">{{ ou.DistinguishedName }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label font-weight-bold">Group Scope</label>
+                <select class="form-control" name="group_scope" id="group_scope">
+                  {% for value, label in scope_choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label font-weight-bold">Group Type</label>
+                <select class="form-control" name="group_category" id="group_category">
+                  {% for value, label in category_choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
               <div class="col-md-12 mb-3">
                 <label class="form-label font-weight-bold">Description</label>
-                <textarea class="form-control" name="description" rows="2" placeholder="Short description or notes"></textarea>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  id="description"
+                  rows="2"
+                  placeholder="Short description or notes"
+                ></textarea>
               </div>
 
-              <!-- Assign Users -->
-              <div class="col-md-12 mb-3">
+              <div class="col-md-12 mb-4">
+                <label class="form-label font-weight-bold">Group Owner</label>
+                <input type="text" id="owner-search" class="form-control" placeholder="Search owner by name or username">
+                <div id="owner-results" class="list-group mt-2"></div>
+                <div id="selected-owner" class="mt-2"></div>
+              </div>
+
+              <div class="col-md-12 mb-4">
+                <label class="form-label font-weight-bold">Copy Members From Existing Group</label>
+                <input type="text" id="copy-group-search" class="form-control" placeholder="Search existing group">
+                <div id="copy-group-results" class="list-group mt-2"></div>
+                <div id="selected-copy-group" class="mt-2"></div>
+              </div>
+
+              <div class="col-md-12 mb-4">
                 <label class="form-label font-weight-bold">Assign Users</label>
-                <input type="text" class="form-control" name="users" placeholder="Comma-separated usernames">
+                <input type="text" id="user-search" class="form-control" placeholder="Search users by name or username">
+                <div id="user-results" class="list-group mt-2"></div>
+                <div id="selected-users" class="mt-2"></div>
               </div>
 
-              <!-- Assign Computers -->
-              <div class="col-md-12 mb-3">
+              <div class="col-md-12 mb-4">
                 <label class="form-label font-weight-bold">Assign Computers</label>
-                <input type="text" class="form-control" name="computers" placeholder="Comma-separated computer names">
+                <input type="text" id="computer-search" class="form-control" placeholder="Search computers by name">
+                <div id="computer-results" class="list-group mt-2"></div>
+                <div id="selected-computers" class="mt-2"></div>
+              </div>
+
+              <div class="col-md-12 mb-4">
+                <label class="form-label font-weight-bold">Assign Nested Groups</label>
+                <input type="text" id="nested-group-search" class="form-control" placeholder="Search groups to add as members">
+                <div id="nested-group-results" class="list-group mt-2"></div>
+                <div id="selected-nested-groups" class="mt-2"></div>
+              </div>
+
+              <!-- Fixed checkbox layout -->
+              <div class="col-md-12 mb-4">
+                <div class="d-flex flex-wrap justify-content-center align-items-center" style="gap: 48px;">
+                  <div class="form-check d-flex align-items-center m-0">
+                    <input
+                      class="form-check-input position-static mr-2"
+                      type="checkbox"
+                      name="protect_from_deletion"
+                      id="protect_from_deletion"
+                      value="1"
+                    >
+                    <label class="form-check-label font-weight-bold mb-0" for="protect_from_deletion">
+                      Protect from accidental deletion
+                    </label>
+                  </div>
+
+                  <div class="form-check d-flex align-items-center m-0">
+                    <input
+                      class="form-check-input position-static mr-2"
+                      type="checkbox"
+                      name="skip_invalid_members"
+                      id="skip_invalid_members"
+                      value="1"
+                      checked
+                    >
+                    <label class="form-check-label font-weight-bold mb-0" for="skip_invalid_members">
+                      Skip invalid members
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-12 mt-3">
+                <div class="card border">
+                  <div class="card-header bg-light">
+                    <strong>Preview</strong>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-6 mb-2">
+                        <strong>Name:</strong> <span id="preview-group-name">—</span>
+                      </div>
+                      <div class="col-md-6 mb-2">
+                        <strong>OU:</strong> <span id="preview-ou">Default OU</span>
+                      </div>
+                      <div class="col-md-6 mb-2">
+                        <strong>Scope:</strong> <span id="preview-scope">Global</span>
+                      </div>
+                      <div class="col-md-6 mb-2">
+                        <strong>Type:</strong> <span id="preview-type">Security</span>
+                      </div>
+                      <div class="col-md-12 mb-2">
+                        <strong>Description:</strong> <span id="preview-description">—</span>
+                      </div>
+                      <div class="col-md-6 mb-2">
+                        <strong>Owner:</strong> <span id="preview-owner">—</span>
+                      </div>
+                      <div class="col-md-6 mb-2">
+                        <strong>Copy From Group:</strong> <span id="preview-copy-group">—</span>
+                      </div>
+                      <div class="col-md-4 mb-2">
+                        <strong>Users:</strong> <span id="preview-users-count">0</span>
+                      </div>
+                      <div class="col-md-4 mb-2">
+                        <strong>Computers:</strong> <span id="preview-computers-count">0</span>
+                      </div>
+                      <div class="col-md-4 mb-2">
+                        <strong>Nested Groups:</strong> <span id="preview-nested-groups-count">0</span>
+                      </div>
+                      <div class="col-md-6 mb-2">
+                        <strong>Protect Deletion:</strong> <span id="preview-protect">No</span>
+                      </div>
+                      <div class="col-md-6 mb-2">
+                        <strong>Skip Invalid Members:</strong> <span id="preview-skip-invalid">Yes</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -51,4 +202,238 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const userSearch = document.getElementById("user-search");
+  const userResults = document.getElementById("user-results");
+  const selectedUsers = document.getElementById("selected-users");
+
+  const computerSearch = document.getElementById("computer-search");
+  const computerResults = document.getElementById("computer-results");
+  const selectedComputers = document.getElementById("selected-computers");
+
+  const ownerSearch = document.getElementById("owner-search");
+  const ownerResults = document.getElementById("owner-results");
+  const selectedOwner = document.getElementById("selected-owner");
+
+  const copyGroupSearch = document.getElementById("copy-group-search");
+  const copyGroupResults = document.getElementById("copy-group-results");
+  const selectedCopyGroup = document.getElementById("selected-copy-group");
+
+  const nestedGroupSearch = document.getElementById("nested-group-search");
+  const nestedGroupResults = document.getElementById("nested-group-results");
+  const selectedNestedGroups = document.getElementById("selected-nested-groups");
+
+  const groupNameInput = document.getElementById("group_name");
+  const descriptionInput = document.getElementById("description");
+  const scopeInput = document.getElementById("group_scope");
+  const typeInput = document.getElementById("group_category");
+  const ouInput = document.getElementById("ou_dn");
+  const protectInput = document.getElementById("protect_from_deletion");
+  const skipInvalidInput = document.getElementById("skip_invalid_members");
+
+  const selectedUserMap = new Map();
+  const selectedComputerMap = new Map();
+  const selectedNestedGroupMap = new Map();
+
+  let ownerState = { label: "", value: "" };
+  let copyGroupState = { label: "", value: "" };
+
+  function debounce(fn, delay) {
+    let timer = null;
+    return function () {
+      const context = this;
+      const args = arguments;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        fn.apply(context, args);
+      }, delay || 400);
+    };
+  }
+
+  function updatePreview() {
+    document.getElementById("preview-group-name").textContent = groupNameInput.value.trim() || "—";
+    document.getElementById("preview-description").textContent = descriptionInput.value.trim() || "—";
+    document.getElementById("preview-scope").textContent = scopeInput.options[scopeInput.selectedIndex]?.text || "—";
+    document.getElementById("preview-type").textContent = typeInput.options[typeInput.selectedIndex]?.text || "—";
+    document.getElementById("preview-ou").textContent =
+      ouInput.value.trim() || "Default OU";
+    document.getElementById("preview-owner").textContent = ownerState.label || "—";
+    document.getElementById("preview-copy-group").textContent = copyGroupState.label || "—";
+    document.getElementById("preview-users-count").textContent = selectedUserMap.size;
+    document.getElementById("preview-computers-count").textContent = selectedComputerMap.size;
+    document.getElementById("preview-nested-groups-count").textContent = selectedNestedGroupMap.size;
+    document.getElementById("preview-protect").textContent = protectInput.checked ? "Yes" : "No";
+    document.getElementById("preview-skip-invalid").textContent = skipInvalidInput.checked ? "Yes" : "No";
+  }
+
+  function createBadge(label, value, inputName, badgeClass, onRemove) {
+    const badge = document.createElement("span");
+    badge.className = badgeClass + " mr-2 mb-2 p-2 d-inline-flex align-items-center";
+    badge.dataset.value = value;
+
+    const text = document.createElement("span");
+    text.textContent = label;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn btn-sm btn-link text-white ml-2 p-0";
+    removeBtn.innerHTML = "&times;";
+    removeBtn.style.textDecoration = "none";
+
+    removeBtn.addEventListener("click", function () {
+      if (typeof onRemove === "function") {
+        onRemove(value);
+      }
+      badge.remove();
+      updatePreview();
+    });
+
+    const hidden = document.createElement("input");
+    hidden.type = "hidden";
+    hidden.name = inputName;
+    hidden.value = value;
+
+    badge.appendChild(text);
+    badge.appendChild(removeBtn);
+    badge.appendChild(hidden);
+
+    return badge;
+  }
+
+  function addMultiItem(container, store, label, value, inputName, badgeClass) {
+    if (store.has(value)) return;
+    store.set(value, label);
+
+    const badge = createBadge(label, value, inputName, badgeClass, function (removedValue) {
+      store.delete(removedValue);
+    });
+    container.appendChild(badge);
+    updatePreview();
+  }
+
+  function setSingleItem(container, label, value, inputName, badgeClass, stateObj) {
+    container.innerHTML = "";
+    stateObj.label = label;
+    stateObj.value = value;
+
+    const badge = createBadge(label, value, inputName, badgeClass, function () {
+      stateObj.label = "";
+      stateObj.value = "";
+    });
+    container.appendChild(badge);
+    updatePreview();
+  }
+
+  function buildLabel(item, type) {
+    if (type === "user" || type === "owner") {
+      const displayName = item.DisplayName || item.SamAccountName || "Unknown User";
+      const sam = item.SamAccountName || "";
+      return sam ? `${displayName} (${sam})` : displayName;
+    }
+    if (type === "computer") {
+      return item.Name || "Unknown Computer";
+    }
+    if (type === "group" || type === "nested_group" || type === "copy_group") {
+      const groupName = item.Name || item.SamAccountName || "Unknown Group";
+      const sam = item.SamAccountName || "";
+      return sam ? `${groupName} (${sam})` : groupName;
+    }
+    return "Unknown";
+  }
+
+  function getValue(item) {
+    return item.DistinguishedName || "";
+  }
+
+  function renderResults(container, items, type) {
+    container.innerHTML = "";
+    if (!items || !items.length) return;
+
+    items.forEach(function (item) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "list-group-item list-group-item-action";
+
+      const label = buildLabel(item, type);
+      const value = getValue(item);
+
+      btn.textContent = label;
+
+      btn.addEventListener("click", function () {
+        if (type === "user") {
+          addMultiItem(selectedUsers, selectedUserMap, label, value, "user_dns", "badge badge-primary");
+          userSearch.value = "";
+          userResults.innerHTML = "";
+        } else if (type === "computer") {
+          addMultiItem(selectedComputers, selectedComputerMap, label, value, "computer_dns", "badge badge-success");
+          computerSearch.value = "";
+          computerResults.innerHTML = "";
+        } else if (type === "owner") {
+          setSingleItem(selectedOwner, label, value, "owner_dn", "badge badge-info", ownerState);
+          ownerSearch.value = "";
+          ownerResults.innerHTML = "";
+        } else if (type === "copy_group") {
+          setSingleItem(selectedCopyGroup, label, value, "copy_from_group_dn", "badge badge-dark", copyGroupState);
+          copyGroupSearch.value = "";
+          copyGroupResults.innerHTML = "";
+        } else if (type === "nested_group") {
+          addMultiItem(selectedNestedGroups, selectedNestedGroupMap, label, value, "nested_group_dns", "badge badge-secondary");
+          nestedGroupSearch.value = "";
+          nestedGroupResults.innerHTML = "";
+        }
+      });
+
+      container.appendChild(btn);
+    });
+  }
+
+  async function searchItems(url, query, resultsContainer, type) {
+  const minLength = (type === "computer") ? 2 : 3;
+
+  if (!query.trim() || query.trim().length < minLength) {
+    resultsContainer.innerHTML = "";
+    return;
+  }
+
+  try {
+    const response = await fetch(`${url}?q=${encodeURIComponent(query)}`);
+    const data = await response.json();
+    renderResults(resultsContainer, data.results || [], type);
+  } catch (error) {
+    console.error("Search failed:", error);
+    resultsContainer.innerHTML = "";
+  }
+}
+
+  userSearch.addEventListener("input", debounce(function () {
+    searchItems("{% url 'search_users' %}", this.value, userResults, "user");
+  }, 400));
+
+  computerSearch.addEventListener("input", debounce(function () {
+    searchItems("{% url 'search_computers' %}", this.value, computerResults, "computer");
+  }, 400));
+
+  ownerSearch.addEventListener("input", debounce(function () {
+    searchItems("{% url 'search_users' %}", this.value, ownerResults, "owner");
+  }, 400));
+
+  copyGroupSearch.addEventListener("input", debounce(function () {
+    searchItems("{% url 'search_groups' %}", this.value, copyGroupResults, "copy_group");
+  }, 400));
+
+  nestedGroupSearch.addEventListener("input", debounce(function () {
+    searchItems("{% url 'search_groups' %}", this.value, nestedGroupResults, "nested_group");
+  }, 400));
+
+  [groupNameInput, descriptionInput, scopeInput, typeInput, ouInput, protectInput, skipInvalidInput]
+    .forEach(function (el) {
+      el.addEventListener("input", updatePreview);
+      el.addEventListener("change", updatePreview);
+    });
+
+  updatePreview();
+});
+</script>
 {% endblock %}

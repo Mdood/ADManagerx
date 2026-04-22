@@ -51,29 +51,28 @@ urlpatterns = [
     # Group management URLs
     path('group_management/', group_management, name='group_management'),
     path('group/create/single/', create_single_group, name='create_single_group'),
+    path("groups/search-users/", search_users_view, name="search_users"),
+    path("groups/search-computers/", search_computers_view, name="search_computers"),
+    path("groups/search-groups/", search_groups_view, name="search_groups"),
     path('group/create/bulk/', create_bulk_groups, name='create_bulk_groups'),
     path('group/update/single/', update_single_group, name='update_single_group'),
+    path("ajax/ad/search-objects/", search_directory_objects_ajax, name="search_directory_objects_ajax"),
+    path("ajax/ad/group-members/", get_group_members_ajax, name="get_group_members_ajax"),
     path('group/update/bulk/', update_bulk_groups, name='update_bulk_groups'),
     path('group/delete/single/', delete_single_group, name='delete_single_group'),
     path('group/delete/bulk/', delete_bulk_groups, name='delete_bulk_groups'),
+    path("groups/move/bulk/", move_bulk_groups, name="move_bulk_groups"),
+    path("groups/delete/bulk/", delete_bulk_groups, name="delete_bulk_groups"),
     path('group/move/single/', move_single_group, name='move_single_group'),
     path('group/move/bulk/', move_bulk_groups, name='move_bulk_groups'),
 
     # Report URLs
     
-    path('reports/', reports_page, name='reports_page'),
-
-    # User Reports Urls
-    path('reports/user/', user_reports, name='user_reports'),
-
-    # Computer Reports Urls
-    path('reports/computer/', computer_reports, name='computer_reports'),
-
-    # Group Reports Urls
-    path('reports/group/', group_reports, name='group_reports'),
-
-    # OU Reports Urls
-    path('reports/ou/', ou_reports, name='ou_reports'),
+    path("reports/", reports_page, name="reports_page"),
+    path("reports/user/", user_reports_page, name="user_reports_page"),
+    path("reports/computer/", computer_reports_page, name="computer_reports_page"),
+    path("reports/ou/", ou_reports_page, name="ou_reports_page"),
+    path("reports/group/", group_reports_page, name="group_reports_page"),
 
 
      # Admin hub & actions

@@ -1,0 +1,37 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-5 bg-white">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+  <div class="row">
+    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
+      <div class="card shadow border-0">
+        <div class="card-body">
+          <h4 class="card-title">Bulk Group Creation</h4>
+          <p class="card-description">Upload an Excel file to create multiple groups.</p>
+          <small class="text-muted">Expected columns: group_name, description</small>
+
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="file">Upload Excel File (.xlsx)</label>
+              <input type="file" class="form-control" id="file" name="file" accept=".xlsx" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Groups</button>
+            <a href="{% static 'assets/samples/bulk_group_creation_template.xlsx' %}" class="btn btn-outline-primary">
+              Download Sample File
+            </a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

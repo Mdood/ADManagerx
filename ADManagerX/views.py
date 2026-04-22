@@ -1,5 +1,6 @@
 from urllib import request
 
+from django.http import JsonResponse
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect
@@ -12,9 +13,14 @@ from .forms import LdapSettingsForm
 from .models import LdapSettings, HelpdeskProfile
 from .ad_service import (
     ADServiceError,
+    bulk_create_groups_from_excel,
     create_user,
     reset_user_password,
     lock_user,
+    search_computers,
+    search_users,
+    search_groups,
+    list_group_ous,
     unlock_user,
     move_user,
     update_user,
@@ -25,6 +31,11 @@ from .ad_service import (
     update_computer,
     create_group,
     update_group,
+    bulk_update_groups_from_excel,
+    get_group_members_for_ui,
+    search_directory_objects,
+    bulk_move_groups_from_excel,
+    bulk_delete_groups_from_excel,
     delete_group,
     move_group,
     create_ou,
@@ -140,47 +151,7 @@ def _test_ldap_connection(server_uri: str, use_ssl: bool, bind_dn: str | None, b
         return True, None
     except Exception as e:
         return False, str(e)
-
-
-# Reports
-def reports_page(request):
-    return render(request, "reports/reports_page.html")
-
-
-def user_reports_page(request):
-    try:
-        from .ad_service import list_users
-        users = list_users()
-    except Exception:
-        users = []
-    return render(request, "reports/user/user_reports_page.html", {"users": users})
-
-
-def ou_reports_page(request):
-    try:
-        from .ad_service import list_ous
-        ous = list_ous()
-    except Exception:
-        ous = []
-    return render(request, "reports/ou/ou_reports_page.html", {"ous": ous})
-
-
-def group_reports_page(request):
-    try:
-        from .ad_service import list_groups
-        groups = list_groups()
-    except Exception:
-        groups = []
-    return render(request, "reports/group/group_reports_page.html", {"groups": groups})
-
-
-def computer_reports_page(request):
-    try:
-        from .ad_service import list_computers
-        computers = list_computers()
-    except Exception:
-        computers = []
-    return render(request, "reports/computer/computer_reports_page.html", {"computers": computers})
+    
 
 
 # -----------------------------
@@ -916,41 +887,209 @@ def move_bulk_ous(request):
 def group_management(request):
     return render(request, "management/group/group_management_page.html")
 
+# -----------------------------
+# Group Creation
+# -----------------------------
 
 def create_single_group(request):
+    ous = list_group_ous()
+
     if request.method == "POST":
         group_name = request.POST.get("group_name", "").strip()
         description = request.POST.get("description", "").strip()
-        users = request.POST.get("users", "")
-        computers = request.POST.get("computers", "")
-        user_list = [u.strip() for u in users.split(",") if u.strip()]
-        computer_list = [c.strip() for c in computers.split(",") if c.strip()]
-        members = [m for m in (user_list + computer_list) if m]
+
+        user_dns = [u.strip() for u in request.POST.getlist("user_dns") if u.strip()]
+        computer_dns = [c.strip() for c in request.POST.getlist("computer_dns") if c.strip()]
+        nested_group_dns = [g.strip() for g in request.POST.getlist("nested_group_dns") if g.strip()]
+
+        group_scope = request.POST.get("group_scope", "Global").strip() or "Global"
+        group_category = request.POST.get("group_category", "Security").strip() or "Security"
+        owner_dn = request.POST.get("owner_dn", "").strip()
+        ou_dn = request.POST.get("ou_dn", "").strip()
+        copy_from_group_dn = request.POST.get("copy_from_group_dn", "").strip()
+        protect_from_deletion = request.POST.get("protect_from_deletion") == "1"
+
         if not group_name:
             messages.error(request, "Group name is required.")
         else:
             try:
-                create_group(group_name, description, members)
-                messages.success(request, f"Group created: {group_name}")
+                create_group(
+                    group_name=group_name,
+                    description=description,
+                    user_dns=user_dns,
+                    computer_dns=computer_dns,
+                    nested_group_dns=nested_group_dns,
+                    group_scope=group_scope,
+                    group_category=group_category,
+                    owner_dn=owner_dn,
+                    ou_dn=ou_dn,
+                    protect_from_deletion=protect_from_deletion,
+                    copy_from_group_dn=copy_from_group_dn,
+                    skip_invalid_members=False,
+                )
+                messages.success(request, f"Group created successfully: {group_name}")
             except ADServiceError as e:
                 messages.error(request, f"Group creation failed: {e}")
-    return render(request, "management/group/create/single_group.html")
+            except Exception as e:
+                messages.error(request, f"Unexpected error while creating group: {e}")
 
+    context = {
+        "ous": ous,
+        "scope_choices": [
+            ("Global", "Global"),
+            ("DomainLocal", "Domain Local"),
+            ("Universal", "Universal"),
+        ],
+        "category_choices": [
+            ("Security", "Security"),
+            ("Distribution", "Distribution"),
+        ],
+    }
+    return render(request, "management/group/create/single_group.html", context)
+
+
+def create_bulk_groups(request):
+    results = []
+
+    if request.method == "POST":
+        upload = request.FILES.get("file")
+
+        if not upload:
+            messages.error(request, "Please upload an Excel file.")
+        else:
+            filename = (upload.name or "").lower()
+            if not filename.endswith(".xlsx"):
+                messages.error(request, "Please upload a .xlsx Excel file.")
+            else:
+                try:
+                    results = bulk_create_groups_from_excel(upload)
+
+                    success_count = sum(1 for row in results if row.get("success"))
+                    fail_count = len(results) - success_count
+
+                    if success_count:
+                        messages.success(request, f"{success_count} group(s) created successfully.")
+                    if fail_count:
+                        messages.warning(request, f"{fail_count} row(s) failed. Review the result table below.")
+                    if not results:
+                        messages.info(request, "The uploaded file did not contain any data rows.")
+                except ADServiceError as e:
+                    messages.error(request, f"Bulk group creation failed: {e}")
+                except Exception as e:
+                    messages.error(request, f"Unexpected error during bulk group creation: {e}")
+
+    return render(
+        request,
+        "management/group/create/bulk_group.html",
+        {
+            "results": results,
+        },
+    )
+
+
+def search_users_view(request):
+    query = request.GET.get("q", "").strip()
+    limit = int(request.GET.get("limit", 20))
+    results = search_users(query, limit=limit) if query else []
+    return JsonResponse({"results": results})
+
+
+def search_computers_view(request):
+    query = request.GET.get("q", "").strip()
+    limit = int(request.GET.get("limit", 20))
+    results = search_computers(query, limit=limit) if query else []
+    return JsonResponse({"results": results})
+
+
+def search_groups_view(request):
+    query = request.GET.get("q", "").strip()
+    limit = int(request.GET.get("limit", 20))
+    results = search_groups(query, limit=limit) if query else []
+    return JsonResponse({"results": results})
+
+# -----------------------------
+# Group Modification
+# -----------------------------
 
 def update_single_group(request):
     if request.method == "POST":
         group_name = request.POST.get("group_name", "").strip()
         description = request.POST.get("description", "").strip()
-        add_members_raw = request.POST.get("add_members", "")
-        remove_members_raw = request.POST.get("remove_members", "")
-        add_members = [m.strip() for m in add_members_raw.split(",") if m.strip()]
-        remove_members = [m.strip() for m in remove_members_raw.split(",") if m.strip()]
-        try:
-            update_group(group_name, description, add_members, remove_members)
-            messages.success(request, f"Group updated: {group_name}")
-        except ADServiceError as e:
-            messages.error(request, f"Update failed: {e}")
+        group_scope = request.POST.get("group_scope", "").strip()
+        group_category = request.POST.get("group_category", "").strip()
+
+        add_member_dns = [v.strip() for v in request.POST.getlist("add_member_dns") if v.strip()]
+        remove_member_dns = [v.strip() for v in request.POST.getlist("remove_member_dns") if v.strip()]
+
+        if not group_name:
+            messages.error(request, "Group name is required.")
+        else:
+            try:
+                update_group(
+                    group_name=group_name,
+                    description=description,
+                    group_scope=group_scope,
+                    group_category=group_category,
+                    add_member_dns=add_member_dns,
+                    remove_member_dns=remove_member_dns,
+                )
+                messages.success(request, f"Group updated successfully: {group_name}")
+            except ADServiceError as e:
+                messages.error(request, f"Group update failed: {e}")
+            except Exception as e:
+                messages.error(request, f"Unexpected error: {e}")
+
     return render(request, "management/group/update/single_group.html")
+
+
+def update_bulk_groups(request):
+    results = []
+
+    if request.method == "POST":
+        upload = request.FILES.get("file")
+
+        if not upload:
+            messages.error(request, "Please upload an Excel file.")
+        else:
+            try:
+                results = bulk_update_groups_from_excel(upload)
+                success_count = sum(1 for r in results if r["success"])
+                fail_count = len(results) - success_count
+
+                if success_count:
+                    messages.success(request, f"{success_count} group rows updated successfully.")
+                if fail_count:
+                    messages.warning(request, f"{fail_count} rows failed.")
+            except ADServiceError as e:
+                messages.error(request, f"Bulk group update failed: {e}")
+            except Exception as e:
+                messages.error(request, f"Unexpected error: {e}")
+
+    return render(
+        request,
+        "management/group/update/bulk_group.html",
+        {
+            "results": results,
+        },
+    )
+
+
+def search_directory_objects_ajax(request):
+    query = request.GET.get("q", "").strip()
+    results = search_directory_objects(query) if query else []
+    return JsonResponse({"results": results})
+
+
+def get_group_members_ajax(request):
+    group_name = request.GET.get("group_name", "").strip()
+    if not group_name:
+        return JsonResponse({"results": []})
+
+    try:
+        results = get_group_members_for_ui(group_name)
+        return JsonResponse({"results": results})
+    except ADServiceError as e:
+        return JsonResponse({"results": [], "error": str(e)}, status=400)
 
 
 def delete_single_group(request):
@@ -969,102 +1108,196 @@ def delete_single_group(request):
 
 
 def move_single_group(request):
+    try:
+        ous = list_group_ous()
+    except Exception:
+        ous = []
+
     if request.method == "POST":
         group_name = request.POST.get("group_name", "").strip()
-        target_ou = request.POST.get("target_ou", "").strip()
+        target_ou_dn = request.POST.get("target_ou_dn", "").strip()
+
         try:
-            move_group(group_name, target_ou)
-            messages.success(request, f"Group moved: {group_name}")
+            move_group(group_name, target_ou_dn)
+            messages.success(request, f"Group moved successfully: {group_name}")
         except ADServiceError as e:
             messages.error(request, f"Move failed: {e}")
-    return render(request, "management/group/move/single_group.html")
+
+    return render(
+        request,
+        "management/group/move/single_group.html",
+        {"ous": ous},
+    )
 
 
-def create_bulk_groups(request):
-    if request.method == "POST":
-        file = request.FILES.get("file")
-        try:
-            rows = _read_excel_rows(file)
-            count = 0
-            for row in rows:
-                name = str(row.get("group_name", "") or "").strip()
-                description = str(row.get("description", "") or "").strip()
-                if name:
-                    create_group(name, description, [])
-                    count += 1
-            messages.success(request, f"Bulk group create completed. {count} groups created.")
-        except ADServiceError as e:
-            messages.error(request, f"Bulk create failed: {e}")
-    return render(request, "management/group/create/bulk_groups.html")
 
-
-def update_bulk_groups(request):
-    if request.method == "POST":
-        file = request.FILES.get("file")
-        try:
-            rows = _read_excel_rows(file)
-            count = 0
-            for row in rows:
-                name = str(row.get("group_name", "") or "").strip()
-                if not name:
-                    continue
-                description = str(row.get("description", "") or "").strip()
-                add_members = [m.strip() for m in str(row.get("add_members", "") or "").split(",") if m.strip()]
-                remove_members = [m.strip() for m in str(row.get("remove_members", "") or "").split(",") if m.strip()]
-                update_group(name, description, add_members, remove_members)
-                count += 1
-            messages.success(request, f"Bulk group update completed. {count} groups updated.")
-        except ADServiceError as e:
-            messages.error(request, f"Bulk update failed: {e}")
-    return render(request, "management/group/update/bulk_groups.html")
-
-
-def delete_bulk_groups(request):
-    if request.method == "POST":
-        file = request.FILES.get("file")
-        try:
-            rows = _read_excel_rows(file)
-            count = 0
-            for row in rows:
-                name = str(row.get("group_name", "") or "").strip()
-                if name:
-                    delete_group(name)
-                    count += 1
-            messages.success(request, f"Bulk group delete completed. {count} groups deleted.")
-        except ADServiceError as e:
-            messages.error(request, f"Bulk delete failed: {e}")
-    return render(request, "management/group/delete/bulk_groups.html")
 
 
 def move_bulk_groups(request):
+    results = []
+
     if request.method == "POST":
-        file = request.FILES.get("file")
-        try:
-            rows = _read_excel_rows(file)
-            count = 0
-            for row in rows:
-                name = str(row.get("group_name", "") or "").strip()
-                target_ou = str(row.get("target_ou", "") or "").strip()
-                if name and target_ou:
-                    move_group(name, target_ou)
-                    count += 1
-            messages.success(request, f"Bulk group move completed. {count} groups moved.")
-        except ADServiceError as e:
-            messages.error(request, f"Bulk move failed: {e}")
-    return render(request, "management/group/move/bulk_groups.html")
+        upload = request.FILES.get("file")
+
+        if not upload:
+            messages.error(request, "Please upload an Excel file.")
+        else:
+            try:
+                results = bulk_move_groups_from_excel(upload)
+
+                success_count = sum(1 for r in results if r["success"])
+                fail_count = len(results) - success_count
+
+                if success_count:
+                    messages.success(request, f"{success_count} groups moved successfully.")
+                if fail_count:
+                    messages.warning(request, f"{fail_count} rows failed.")
+            except Exception as e:
+                messages.error(request, f"Bulk move failed: {e}")
+
+    return render(
+        request,
+        "management/group/move/bulk_group.html",
+        {"results": results, "mode": "move"},
+    )
 
 
-# Reports shortcuts
-def user_reports(request):
+def delete_bulk_groups(request):
+    results = []
+
+    if request.method == "POST":
+        upload = request.FILES.get("file")
+
+        if not upload:
+            messages.error(request, "Please upload an Excel file.")
+        else:
+            try:
+                results = bulk_delete_groups_from_excel(upload)
+
+                success_count = sum(1 for r in results if r["success"])
+                fail_count = len(results) - success_count
+
+                if success_count:
+                    messages.success(request, f"{success_count} groups deleted successfully.")
+                if fail_count:
+                    messages.warning(request, f"{fail_count} rows failed.")
+            except Exception as e:
+                messages.error(request, f"Bulk delete failed: {e}")
+
+    return render(
+        request,
+        "management/group/delete/bulk_group.html",
+        {"results": results, "mode": "delete"},
+    )
+
+
+# Reports
+def reports_page(request):
+    return render(request, "reports/reports_page.html")
+
+def user_reports_page(request):
+    report_type = (request.GET.get("report") or "all").strip().lower()
+
+    report_titles = {
+        "all": "All Users",
+        "empty_attributes": "Users with Empty Attributes",
+        "without_managers": "Users Without Managers",
+        "duplicate_attributes": "Users with Duplicate Email",
+        "without_email": "Users Without Email",
+        "without_hr_id": "Users Without HR ID",
+        "enabled": "Enabled Users",
+        "recently_created": "Recently Created Users",
+        "inactive": "Inactive Users",
+        "real_last_logon": "Last Logon Users",
+        "recently_logged_on": "Recently Logged On Users",
+        "disabled": "Disabled Users",
+        "locked": "Locked-out Users",
+        "expired": "Account Expired Users",
+    }
+
+    report_descriptions = {
+        "all": "Showing all available users.",
+        "empty_attributes": "Users missing one or more important attributes.",
+        "without_managers": "Users who do not have a manager assigned.",
+        "duplicate_attributes": "Users with duplicate email values.",
+        "without_email": "Users who do not have an email address.",
+        "without_hr_id": "Users who do not have an HR ID.",
+        "enabled": "Users whose accounts are enabled.",
+        "recently_created": "Users created recently based on LDAP creation date.",
+        "inactive": "Users with no recent logon activity based on the best available LDAP logon value.",
+        "real_last_logon": "Users with available logon values from LDAP attributes.",
+        "recently_logged_on": "Users sorted by the most recent available LDAP logon value.",
+        "disabled": "Users whose accounts are disabled.",
+        "locked": "Users whose accounts appear locked based on LDAP lockout data.",
+        "expired": "Users whose accounts are expired.",
+    }
+
+    users = []
     try:
-        from .ad_service import list_users
-        users = list_users()
-    except Exception:
-        users = []
-    return render(request, "reports/user/user_reports_page.html", {"users": users})
+        from .ad_service import get_user_report_data
+        users = get_user_report_data(report_type=report_type)
+        users = sorted(users, key=lambda x: (x.get("display_name") or x.get("username") or "").lower())
+    except Exception as e:
+        messages.error(request, f"Failed to load user report data: {e}")
+
+    context = {
+        "users": users,
+        "selected_report": report_type,
+        "report_title": report_titles.get(report_type, "User Report"),
+        "report_description": report_descriptions.get(report_type, "Showing user report data."),
+    }
+    return render(request, "reports/user/user_reports_page.html", context)
 
 
-def computer_reports(request):
+def group_reports_page(request):
+    report_type = (request.GET.get("report") or "all").strip().lower()
+
+    report_titles = {
+        "all": "All Groups",
+        "with_members": "Groups With Members",
+        "detailed_members": "Detailed Group Members",
+        "without_members": "Groups Without Members",
+        "nested_groups": "Nested Groups",
+        "recently_created": "Recently Created Groups",
+        "recently_modified": "Recently Modified Groups",
+        "without_description": "Groups Without Description",
+        "security": "Security Groups",
+        "distribution": "Distribution Groups",
+        "large_groups": "Large Groups",
+    }
+
+    report_descriptions = {
+        "all": "Showing all available groups.",
+        "with_members": "Groups that currently have one or more members.",
+        "detailed_members": "Groups with member preview information.",
+        "without_members": "Groups that do not currently contain any members.",
+        "nested_groups": "Groups that contain one or more nested groups.",
+        "recently_created": "Groups created recently based on LDAP creation date.",
+        "recently_modified": "Groups modified recently based on LDAP change date.",
+        "without_description": "Groups without a description.",
+        "security": "Groups marked as security groups.",
+        "distribution": "Groups marked as distribution groups.",
+        "large_groups": "Groups with a large number of members.",
+    }
+
+    groups = []
+    try:
+        from .ad_service import get_group_report_data
+        groups = get_group_report_data(report_type=report_type)
+        groups = sorted(groups, key=lambda x: (x.get("name") or "").lower())
+    except Exception as e:
+        messages.error(request, f"Failed to load group report data: {e}")
+
+    context = {
+        "groups": groups,
+        "selected_report": report_type,
+        "report_title": report_titles.get(report_type, "Group Report"),
+        "report_description": report_descriptions.get(report_type, "Showing group report data."),
+    }
+    return render(request, "reports/group/group_reports_page.html", context)
+
+
+def computer_reports_page(request):
     try:
         from .ad_service import list_computers
         computers = list_computers()
@@ -1073,16 +1306,7 @@ def computer_reports(request):
     return render(request, "reports/computer/computer_reports_page.html", {"computers": computers})
 
 
-def group_reports(request):
-    try:
-        from .ad_service import list_groups
-        groups = list_groups()
-    except Exception:
-        groups = []
-    return render(request, "reports/group/group_reports_page.html", {"groups": groups})
-
-
-def ou_reports(request):
+def ou_reports_page(request):
     try:
         from .ad_service import list_ous
         ous = list_ous()
