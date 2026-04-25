@@ -1,24 +1,61 @@
-{% extends "layout.html" %}
+{% extends 'layout.html' %}
 {% load static %}
 
 {% block content %}
 <div class="content-wrapper mt-5 pt-5 bg-white">
-  <div class="row">
-    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
-      <div class="card shadow border-0">
-        <div class="card-body">
-          <h4 class="card-title text-danger">Bulk Delete OUs</h4>
-          <p class="card-description">Upload an Excel file to delete multiple OUs.</p>
-          <small class="text-muted">Expected columns: ou_dn</small>
 
-          <form method="post" enctype="multipart/form-data">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <div class="card shadow border-0">
+        <div class="card-body p-4">
+
+          <h4 class="card-title text-danger">Bulk Delete OUs</h4>
+
+          <p class="card-description">
+            Upload an Excel file to delete multiple OUs.
+          </p>
+
+          <small class="text-muted d-block mb-3">
+            Expected columns: ou_dn
+          </small>
+
+          <form method="POST" enctype="multipart/form-data" action="{% url 'delete_bulk_ous' %}">
             {% csrf_token %}
-            <div class="form-group">
+
+            <div class="form-group mb-3">
               <label for="excel_file">Excel File (.xlsx)</label>
-              <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx" required>
+              <input type="file"
+                     class="form-control"
+                     id="excel_file"
+                     name="excel_file"
+                     accept=".xlsx"
+                     required>
             </div>
-            <button type="submit" class="btn btn-danger">Delete OUs</button>
+
+            <div class="alert alert-danger">
+              <strong>Dangerous action.</strong> This will permanently delete the listed OUs.
+              Make sure your Excel file contains the correct OU distinguished names.
+            </div>
+
+            <div class="mt-3">
+              <button type="submit" class="btn btn-danger px-4 mr-2">
+                Delete OUs
+              </button>
+
+              <a href="{% static 'samples/bulk_ou_delete_sample.xlsx' %}"
+                 class="btn btn-outline-secondary px-4">
+                Download Sample
+              </a>
+            </div>
+
           </form>
+
         </div>
       </div>
     </div>

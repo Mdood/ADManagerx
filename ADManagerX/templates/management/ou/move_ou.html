@@ -3,29 +3,77 @@
 
 {% block content %}
 <div class="content-wrapper mt-5 pt-5 bg-white">
-  <div class="row">
-    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
       <div class="card shadow border-0">
-        <div class="card-body">
+        <div class="card-body p-4">
+
           <h4 class="card-title">Move Organizational Unit</h4>
           <p class="card-description">Move an OU to a different parent OU.</p>
 
           <form method="post">
             {% csrf_token %}
-            <div class="form-group">
-              <label>OU Distinguished Name (DN)</label>
-              <input type="text" class="form-control" name="ou_dn" placeholder="OU=HR,DC=corp,DC=local" required>
+
+            <!-- SOURCE OU -->
+            <div class="form-group mb-3">
+              <label>Select OU to Move</label>
+
+              {% if ous %}
+                <select name="ou_dn" class="form-control" required>
+                  <option value="">-- Select OU --</option>
+                  {% for ou in ous %}
+                    <option value="{{ ou.dn }}">
+                      {{ ou.ou }} — {{ ou.dn }}
+                    </option>
+                  {% endfor %}
+                </select>
+              {% else %}
+                <div class="alert alert-warning mb-0">
+                  No OUs found (or LDAP issue).
+                </div>
+              {% endif %}
             </div>
-            <div class="form-group">
-              <label>Target Parent OU DN</label>
-              <input type="text" class="form-control" name="target_parent_dn" placeholder="OU=Departments,DC=corp,DC=local" required>
+
+            <!-- TARGET OU -->
+            <div class="form-group mb-3">
+              <label>Target Parent OU</label>
+
+              {% if ous %}
+                <select name="target_parent_dn" class="form-control" required>
+                  <option value="">-- Select Target Parent OU --</option>
+                  {% for ou in ous %}
+                    <option value="{{ ou.dn }}">
+                      {{ ou.ou }} — {{ ou.dn }}
+                    </option>
+                  {% endfor %}
+                </select>
+              {% endif %}
             </div>
-            <button type="submit" class="btn btn-primary">Move OU</button>
-            <a href="{% url 'ou_management' %}" class="btn btn-light ml-2">Cancel</a>
+
+            <!-- ACTION BUTTONS -->
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary px-4 mr-2">
+                Move OU
+              </button>
+
+              <a href="{% url 'ou_management' %}" class="btn btn-light px-4">
+                Cancel
+              </a>
+            </div>
+
           </form>
+
         </div>
       </div>
     </div>
   </div>
+
 </div>
 {% endblock %}

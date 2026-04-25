@@ -3,24 +3,45 @@
 
 {% block content %}
 <div class="content-wrapper mt-5 pt-5 bg-white">
-  <div class="row">
-    <div class="col-md-12 grid-margin stretch-card">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
       <div class="card shadow border-0">
-        <div class="card-body">
+        <div class="card-body p-4">
+
           <h4 class="card-title">Lock Bulk Computers</h4>
+
           <p class="card-description">
             Upload an Excel file with computer names to lock their accounts.
           </p>
-          <small class="text-muted">Expected columns: computer_name</small>
+
+          <small class="text-muted d-block mb-3">
+            Expected columns: computer_name
+          </small>
 
           <form method="POST" enctype="multipart/form-data" action="{% url 'lock_bulk_computers' %}">
             {% csrf_token %}
-            <div class="form-group">
+
+            <div class="form-group mb-3">
               <label for="excel_file">Select Excel File (.xlsx)</label>
-              <input type="file" class="form-control-file" id="excel_file" name="excel_file" accept=".xlsx" required>
+              <input type="file"
+                     class="form-control"
+                     id="excel_file"
+                     name="excel_file"
+                     accept=".xlsx"
+                     required>
             </div>
 
-            <button type="submit" class="btn btn-dark mt-3">Lock Computers</button>
+            <button type="submit" class="btn btn-dark px-4">
+              Upload
+            </button>
+
           </form>
 
         </div>

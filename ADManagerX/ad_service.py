@@ -732,33 +732,6 @@ def get_user_report_data(report_type: str = "all") -> list[dict]:
 
     return users
 
-def _ldap_dt_to_datetime(value):
-    if value in (None, ""):
-        return None
-
-    if isinstance(value, datetime):
-        if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value
-
-    text = _safe_str(value)
-    if not text:
-        return None
-
-    formats = [
-        "%Y%m%d%H%M%S.0Z",
-        "%Y%m%d%H%M%SZ",
-        "%Y%m%d%H%M%S.%fZ",
-    ]
-
-    for fmt in formats:
-        try:
-            return datetime.strptime(text, fmt).replace(tzinfo=timezone.utc)
-        except Exception:
-            continue
-
-    return None
-
 
 def _group_type_flags(group_type_value) -> tuple[bool, str]:
     try:

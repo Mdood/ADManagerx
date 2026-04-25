@@ -3,48 +3,218 @@
 {% block title %}OU Reports{% endblock %}
 
 {% block content %}
-<div class="content-wrapper mt-5 pt-5 bg-white w-auto h-auto">
-    <h4 class="mb-3">OU Reports</h4>
-    <p class="text-muted">Select a report to view detailed OU information.</p>
+<div class="content-wrapper mt-5 pt-4 bg-white container-fluid">
 
-    <!-- OU General Reports -->
-    <h5 class="mt-4">OU General Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">All OUs</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Empty OUs</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Users-Only OUs</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Computers-Only OUs</a></div>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+        <div>
+            <h4 class="mb-1">OU Reports</h4>
+            <p class="text-muted mb-0">View, search, and print Active Directory OU report data.</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-danger" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> Print / Save PDF
+            </button>
+        </div>
     </div>
 
-    <!-- Additional OU Reports -->
-    <h5 class="mt-4">Additional OU Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Recently Created OUs</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Recently Modified OUs</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">GPO Linked OUs</a></div>
+    {% if error %}
+      <div class="alert alert-danger mb-3">{{ error }}</div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">OU General Reports</h5>
+            <div class="row g-2 mb-4">
+                <div class="col-md-3">
+                    <a href="{% url 'ou_reports_page' %}?report=all" class="btn {% if report == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                        All OUs
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'ou_reports_page' %}?report=empty" class="btn {% if report == 'empty' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                        Empty OUs
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'ou_reports_page' %}?report=protected" class="btn {% if report == 'protected' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                        Protected OUs
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'ou_reports_page' %}?report=unprotected" class="btn {% if report == 'unprotected' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                        Unprotected OUs
+                    </a>
+                </div>
+            </div>
+
+            <h5 class="mb-3">Additional OU Reports</h5>
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <a href="{% url 'ou_reports_page' %}?report=recently_created" class="btn {% if report == 'recently_created' %}btn-success{% else %}btn-outline-success{% endif %} w-100">
+                        Recently Created OUs
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'ou_reports_page' %}?report=recently_modified" class="btn {% if report == 'recently_modified' %}btn-success{% else %}btn-outline-success{% endif %} w-100">
+                        Recently Modified OUs
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'ou_reports_page' %}?report=counts" class="btn {% if report == 'counts' %}btn-success{% else %}btn-outline-success{% endif %} w-100">
+                        OU Object Counts
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'ou_reports_page' %}?report=gpo_linked" class="btn {% if report == 'gpo_linked' %}btn-success{% else %}btn-outline-success{% endif %} w-100">
+                        GPO-linked OUs
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <hr class="my-4">
-    <h5>All OUs (First 200)</h5>
-    <div class="table-responsive">
-        <table class="table table-sm table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>OU</th>
-                    <th>DN</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for o in ous %}
-                    <tr>
-                        <td>{{ o.ou }}</td>
-                        <td>{{ o.dn }}</td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="2" class="text-muted">No data available.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center g-3">
+                <div class="col-md-8">
+                    <input
+                        type="text"
+                        id="ouSearch"
+                        class="form-control"
+                        placeholder="Search by OU name, DN, description, modified date, created date, or gPLink..."
+                    >
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="badge bg-success fs-6">
+                        Showing <span id="visibleOuCount">{{ ous|length }}</span> result{{ ous|length|pluralize }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="mb-1">{{ table_title }}</h5>
+        </div>
+    </div>
+
+    <div class="row" id="ouCardsContainer">
+        {% for ou in ous %}
+            <div
+                class="col-md-6 col-xl-4 mb-4 ou-card"
+                data-search="{{ ou.name|default:''|lower }} {{ ou.dn|default:''|lower }} {{ ou.description|default:''|lower }} {{ ou.when_created|default:''|lower }} {{ ou.when_changed|default:''|lower }} {{ ou.gp_link|default:''|lower }}"
+            >
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                            <h5 class="card-title mb-0">{{ ou.name|default:"No OU Name" }}</h5>
+                            <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                {% if report == "protected" %}
+                                    <span class="badge bg-success">Protected</span>
+                                {% elif report == "unprotected" %}
+                                    <span class="badge bg-danger">Unprotected</span>
+                                {% elif report == "empty" %}
+                                    <span class="badge bg-warning text-dark">Empty</span>
+                                {% elif report == "gpo_linked" %}
+                                    <span class="badge bg-info text-dark">GPO Linked</span>
+                                {% elif report == "counts" %}
+                                    <span class="badge bg-primary">Counts</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <p class="mb-1">
+                            <strong>DN:</strong>
+                            <span class="small text-muted">{{ ou.dn|default:"-" }}</span>
+                        </p>
+
+                        {% if report == "all" or report == "empty" or report == "protected" or report == "unprotected" %}
+                            <p class="mb-1"><strong>Description:</strong> {{ ou.description|default:"-" }}</p>
+                        {% endif %}
+
+                        {% if report == "recently_created" %}
+                            <p class="mb-1"><strong>Created:</strong> {{ ou.when_created|default:"-" }}</p>
+                        {% endif %}
+
+                        {% if report == "recently_modified" %}
+                            <p class="mb-1"><strong>Modified:</strong> {{ ou.when_changed|default:"-" }}</p>
+                        {% endif %}
+
+                        {% if report == "gpo_linked" %}
+                            <p class="mb-1">
+                                <strong>gPLink:</strong>
+                                <span class="small text-muted">{{ ou.gp_link|default:"-" }}</span>
+                            </p>
+                        {% endif %}
+
+                        {% if report == "counts" %}
+                            <p class="mb-1"><strong>Users:</strong> {{ ou.users_count|default:"0" }}</p>
+                            <p class="mb-1"><strong>Computers:</strong> {{ ou.computers_count|default:"0" }}</p>
+                            <p class="mb-1"><strong>Groups:</strong> {{ ou.groups_count|default:"0" }}</p>
+                            <p class="mb-1"><strong>Child OUs:</strong> {{ ou.child_ous_count|default:"0" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-light border text-muted">
+                    No data available for this report.
+                </div>
+            </div>
+        {% endfor %}
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("ouSearch");
+    const cards = document.querySelectorAll(".ou-card");
+    const visibleCount = document.getElementById("visibleOuCount");
+
+    function filterCards() {
+        const query = (searchInput.value || "").trim().toLowerCase();
+        let count = 0;
+
+        cards.forEach(card => {
+            const searchable = (card.dataset.search || "").toLowerCase();
+            const matched = searchable.includes(query);
+            card.style.display = matched ? "" : "none";
+            if (matched) count++;
+        });
+
+        if (visibleCount) {
+            visibleCount.textContent = count;
+        }
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", filterCards);
+    }
+});
+</script>
+
+<style>
+@media print {
+    .btn,
+    #ouSearch,
+    .navbar,
+    .sidebar,
+    footer {
+        display: none !important;
+    }
+
+    .content-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+}
+</style>
 {% endblock %}
