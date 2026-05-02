@@ -1,18 +1,175 @@
 {% extends 'layout.html' %}
 {% load static %}
 
-{% block content %}
-<div class="content-wrapper mt-5 pt-5 bg-white">
-  {% if messages %}
-    {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
 
-  <div class="row justify-content-center">
+
+{% block extra_head %}
+<style>
+  .management-page {
+    background: #f4f8ff !important;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  .management-page .page-heading,
+  .management-page > h4,
+  .management-page .card-title {
+    color: #172554;
+    font-weight: 800;
+  }
+
+  .management-page > h4 {
+    font-size: 28px;
+    margin-bottom: 6px !important;
+  }
+
+  .management-page > p.text-muted {
+    color: #64748b !important;
+    margin-bottom: 24px;
+  }
+
+  .management-page .card,
+  .management-page .adx-card {
+    border: 1px solid rgba(37, 99, 235, 0.10) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 32px rgba(30, 64, 175, 0.10) !important;
+    overflow: hidden;
+  }
+
+  .management-page .card-body {
+    padding: 24px;
+  }
+
+  .management-page .card-header,
+  .management-page .adx-card-header {
+    background: linear-gradient(135deg, #1e3a8a, #1d4ed8) !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    padding: 18px 24px;
+  }
+
+  .management-page .card-header h4,
+  .management-page .card-header h5,
+  .management-page .card-header i,
+  .management-page .adx-card-header h4,
+  .management-page .adx-card-header h5,
+  .management-page .adx-card-header i {
+    color: #ffffff !important;
+  }
+
+  .management-page .card-description,
+  .management-page .text-muted,
+  .management-page small {
+    color: #64748b !important;
+  }
+
+  .management-page label,
+  .management-page .form-label {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .management-page .form-control,
+  .management-page select,
+  .management-page textarea,
+  .management-page input[type="file"] {
+    border-radius: 12px !important;
+    border: 1px solid #dbeafe !important;
+    min-height: 44px;
+  }
+
+  .management-page .form-control:focus,
+  .management-page select:focus,
+  .management-page textarea:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.16) !important;
+  }
+
+  .management-page .btn {
+    border-radius: 12px !important;
+    font-weight: 800;
+    padding: 9px 16px;
+  }
+
+  .management-page .btn-primary,
+  .management-page .btn-info,
+  .management-page .btn-success,
+  .management-page .btn-warning,
+  .management-page .btn-dark,
+  .management-page .btn-secondary {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+  }
+
+  .management-page .btn-primary:hover,
+  .management-page .btn-info:hover,
+  .management-page .btn-success:hover,
+  .management-page .btn-warning:hover,
+  .management-page .btn-dark:hover,
+  .management-page .btn-secondary:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+  }
+
+  .management-page .btn-outline-primary,
+  .management-page .btn-outline-info,
+  .management-page .btn-outline-success,
+  .management-page .btn-outline-warning,
+  .management-page .btn-outline-dark,
+  .management-page .btn-outline-secondary,
+  .management-page .adx-sample-btn {
+    border-color: #2563eb !important;
+    color: #1d4ed8 !important;
+    background: #ffffff !important;
+  }
+
+  .management-page .btn-outline-primary:hover,
+  .management-page .btn-outline-info:hover,
+  .management-page .btn-outline-success:hover,
+  .management-page .btn-outline-warning:hover,
+  .management-page .btn-outline-dark:hover,
+  .management-page .btn-outline-secondary:hover,
+  .management-page .adx-sample-btn:hover {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+  }
+
+  .management-page .border.rounded.bg-light,
+  .management-page .bg-light {
+    background: #eff6ff !important;
+    border-color: #dbeafe !important;
+  }
+
+  .management-page .management-action-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    height: 100%;
+  }
+
+  .management-page .management-action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(30, 64, 175, 0.14) !important;
+  }
+
+  .management-page .bulk-help-box {
+    background: #eff6ff;
+    border: 1px dashed #93c5fd;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin: 12px 0 18px;
+    color: #1e3a8a;
+    font-weight: 700;
+  }
+</style>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="content-wrapper mt-5 pt-4 management-page">
+<div class="row justify-content-center">
     <div class="col-lg-8 col-md-10">
-      <div class="card shadow border-0">
-        <div class="card-header bg-primary text-white d-flex align-items-center">
+      <div class="card adx-card">
+        <div class="card-header adx-card-header d-flex align-items-center">
           <i class="mdi mdi-account-plus mr-2" style="font-size: 1.5rem;"></i>
           <h4 class="mb-0 ml-2">Create New User</h4>
         </div>
@@ -23,49 +180,119 @@
 
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label class="form-label font-weight-bold">First Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" name="first_name" placeholder="Enter first name" required>
+                <label class="form-label font-weight-bold">
+                  First Name <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="first_name"
+                  placeholder="Enter first name"
+                  value="{{ request.POST.first_name|default:'' }}"
+                  required
+                >
               </div>
 
               <div class="col-md-6 mb-3">
-                <label class="form-label font-weight-bold">Last Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" name="last_name" placeholder="Enter last name" required>
+                <label class="form-label font-weight-bold">
+                  Last Name <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="last_name"
+                  placeholder="Enter last name"
+                  value="{{ request.POST.last_name|default:'' }}"
+                  required
+                >
               </div>
 
               <div class="col-md-6 mb-3">
-                <label class="form-label font-weight-bold">Username <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" name="username" placeholder="Enter username" required>
+                <label class="form-label font-weight-bold">
+                  Username <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="username"
+                  placeholder="Enter username"
+                  value="{{ request.POST.username|default:'' }}"
+                  required
+                >
               </div>
 
               <div class="col-md-6 mb-3">
-                <label class="form-label font-weight-bold">Email <span class="text-danger">*</span></label>
-                <input type="email" class="form-control" name="email" placeholder="Enter email address" required>
+                <label class="form-label font-weight-bold">
+                  Email <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="email"
+                  class="form-control"
+                  name="email"
+                  placeholder="Enter email address"
+                  value="{{ request.POST.email|default:'' }}"
+                  required
+                >
               </div>
 
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Phone</label>
-                <input type="text" class="form-control" name="phone" placeholder="Enter phone number">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="phone"
+                  placeholder="Enter phone number"
+                  value="{{ request.POST.phone|default:'' }}"
+                >
               </div>
 
               <div class="col-md-6 mb-3">
                 <label class="form-label font-weight-bold">Department</label>
-                <input type="text" class="form-control" name="department" placeholder="Enter department">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="department"
+                  placeholder="Enter department"
+                  value="{{ request.POST.department|default:'' }}"
+                >
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label font-weight-bold">
+                  HR ID <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="hr_id"
+                  placeholder="Enter HR ID"
+                  value="{{ request.POST.hr_id|default:'' }}"
+                  required
+                >
               </div>
 
               <div class="col-md-12 mb-3">
                 <label class="form-label font-weight-bold">Description</label>
-                <textarea class="form-control" name="description" rows="2" placeholder="Short description or notes"></textarea>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="2"
+                  placeholder="Short description or notes"
+                >{{ request.POST.description|default:'' }}</textarea>
               </div>
 
-              <!-- NEW: Target OU -->
               <div class="col-md-12 mb-3">
-                <label class="form-label font-weight-bold">Target OU <span class="text-danger">*</span></label>
+                <label class="form-label font-weight-bold">
+                  Target OU <span class="text-danger">*</span>
+                </label>
 
                 {% if ous %}
                   <select name="target_ou_dn" class="form-control" required>
-                    <option value="" disabled selected>-- Select OU --</option>
+                    <option value="" disabled {% if not request.POST.target_ou_dn %}selected{% endif %}>
+                      -- Select OU --
+                    </option>
                     {% for ou in ous %}
-                      <option value="{{ ou.dn }}">
+                      <option value="{{ ou.dn }}" {% if request.POST.target_ou_dn == ou.dn %}selected{% endif %}>
                         {{ ou.ou }} — {{ ou.dn }}
                       </option>
                     {% endfor %}
@@ -77,7 +304,6 @@
                 {% endif %}
               </div>
 
-              <!-- NEW: Groups multi-select -->
               <div class="col-md-12 mb-3">
                 <label class="form-label font-weight-bold">Assign Groups</label>
 
@@ -89,7 +315,9 @@
                       </option>
                     {% endfor %}
                   </select>
-                  <small class="text-muted">Hold CTRL (Windows) / CMD (Mac) to select multiple groups.</small>
+                  <small class="text-muted">
+                    Hold CTRL (Windows) / CMD (Mac) to select multiple groups.
+                  </small>
                 {% else %}
                   <div class="alert alert-warning mb-0">
                     No groups found (or LDAP not reachable). Check LDAP settings and permissions.
@@ -98,13 +326,101 @@
               </div>
 
               <div class="col-md-6 mb-3">
-                <label class="form-label font-weight-bold">Password <span class="text-danger">*</span></label>
-                <input type="password" class="form-control" name="password" placeholder="Enter password" required>
+                <label class="form-label font-weight-bold">
+                  Password <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="password"
+                  class="form-control"
+                  name="password"
+                  placeholder="Enter password"
+                  required
+                >
               </div>
 
               <div class="col-md-6 mb-3">
-                <label class="form-label font-weight-bold">Confirm Password <span class="text-danger">*</span></label>
-                <input type="password" class="form-control" name="confirm_password" placeholder="Confirm password" required>
+                <label class="form-label font-weight-bold">
+                  Confirm Password <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="password"
+                  class="form-control"
+                  name="confirm_password"
+                  placeholder="Confirm password"
+                  required
+                >
+              </div>
+
+              <div class="col-md-12 mb-3">
+                <label class="form-label font-weight-bold d-block mb-2">Account Options</label>
+
+                <div class="border rounded p-3 bg-light">
+                  <div class="row">
+                    <div class="col-md-6 mb-2">
+                      <div class="custom-control custom-checkbox">
+                        <input
+                          class="custom-control-input"
+                          type="checkbox"
+                          name="must_change_password"
+                          id="must_change_password"
+                          {% if request.POST.must_change_password %}checked{% endif %}
+                        >
+                        <label class="custom-control-label" for="must_change_password">
+                          Must change password at first logon
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                      <div class="custom-control custom-checkbox">
+                        <input
+                          class="custom-control-input"
+                          type="checkbox"
+                          name="user_cannot_change_password"
+                          id="user_cannot_change_password"
+                          {% if request.POST.user_cannot_change_password %}checked{% endif %}
+                        >
+                        <label class="custom-control-label" for="user_cannot_change_password">
+                          User cannot change password
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                      <div class="custom-control custom-checkbox">
+                        <input
+                          class="custom-control-input"
+                          type="checkbox"
+                          name="password_never_expires"
+                          id="password_never_expires"
+                          {% if request.POST.password_never_expires %}checked{% endif %}
+                        >
+                        <label class="custom-control-label" for="password_never_expires">
+                          Password never expires
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                      <div class="custom-control custom-checkbox">
+                        <input
+                          class="custom-control-input"
+                          type="checkbox"
+                          name="account_disabled"
+                          id="account_disabled"
+                          {% if request.POST.account_disabled %}checked{% endif %}
+                        >
+                        <label class="custom-control-label" for="account_disabled">
+                          Account is disabled
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <small class="text-muted d-block mt-2">
+                  Select the account behavior you want when the user is created.
+                </small>
               </div>
             </div>
 

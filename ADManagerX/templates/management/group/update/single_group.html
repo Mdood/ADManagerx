@@ -1,33 +1,256 @@
 {% extends 'layout.html' %}
 {% load static %}
 
+
+
+{% block extra_head %}
+<style>
+  .management-page {
+    background: #f4f8ff !important;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  .management-page .page-heading,
+  .management-page > h4,
+  .management-page .card-title {
+    color: #172554;
+    font-weight: 800;
+  }
+
+  .management-page > h4 {
+    font-size: 28px;
+    margin-bottom: 6px !important;
+  }
+
+  .management-page > p.text-muted {
+    color: #64748b !important;
+    margin-bottom: 24px;
+  }
+
+  .management-page .card,
+  .management-page .adx-card {
+    border: 1px solid rgba(37, 99, 235, 0.10) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 32px rgba(30, 64, 175, 0.10) !important;
+    overflow: hidden;
+  }
+
+  .management-page .card-body {
+    padding: 24px;
+  }
+
+  .management-page .card-header,
+  .management-page .adx-card-header {
+    background: linear-gradient(135deg, #1e3a8a, #1d4ed8) !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    padding: 18px 24px;
+  }
+
+  .management-page .card-header h4,
+  .management-page .card-header h5,
+  .management-page .card-header i,
+  .management-page .adx-card-header h4,
+  .management-page .adx-card-header h5,
+  .management-page .adx-card-header i {
+    color: #ffffff !important;
+  }
+
+  .management-page .card-description,
+  .management-page .text-muted,
+  .management-page small {
+    color: #64748b !important;
+  }
+
+  .management-page label,
+  .management-page .form-label {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .management-page .form-control,
+  .management-page select,
+  .management-page textarea,
+  .management-page input[type="file"] {
+    border-radius: 12px !important;
+    border: 1px solid #dbeafe !important;
+    min-height: 44px;
+  }
+
+  .management-page .form-control:focus,
+  .management-page select:focus,
+  .management-page textarea:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.16) !important;
+  }
+
+  .management-page .btn {
+    border-radius: 12px !important;
+    font-weight: 800;
+    padding: 9px 16px;
+  }
+
+  .management-page .btn-primary,
+  .management-page .btn-info,
+  .management-page .btn-success,
+  .management-page .btn-warning,
+  .management-page .btn-dark,
+  .management-page .btn-secondary {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+  }
+
+  .management-page .btn-primary:hover,
+  .management-page .btn-info:hover,
+  .management-page .btn-success:hover,
+  .management-page .btn-warning:hover,
+  .management-page .btn-dark:hover,
+  .management-page .btn-secondary:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+  }
+
+  .management-page .btn-outline-primary,
+  .management-page .btn-outline-info,
+  .management-page .btn-outline-success,
+  .management-page .btn-outline-warning,
+  .management-page .btn-outline-dark,
+  .management-page .btn-outline-secondary,
+  .management-page .adx-sample-btn {
+    border-color: #2563eb !important;
+    color: #1d4ed8 !important;
+    background: #ffffff !important;
+  }
+
+  .management-page .btn-outline-primary:hover,
+  .management-page .btn-outline-info:hover,
+  .management-page .btn-outline-success:hover,
+  .management-page .btn-outline-warning:hover,
+  .management-page .btn-outline-dark:hover,
+  .management-page .btn-outline-secondary:hover,
+  .management-page .adx-sample-btn:hover {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+  }
+
+  .management-page .border.rounded.bg-light,
+  .management-page .bg-light {
+    background: #eff6ff !important;
+    border-color: #dbeafe !important;
+  }
+
+  .management-page .management-action-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    height: 100%;
+  }
+
+  .management-page .management-action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(30, 64, 175, 0.14) !important;
+  }
+
+  .management-page .bulk-help-box {
+    background: #eff6ff;
+    border: 1px dashed #93c5fd;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin: 12px 0 18px;
+    color: #1e3a8a;
+    font-weight: 700;
+  }
+</style>
+{% endblock extra_head %}
+
 {% block content %}
-<div class="content-wrapper mt-5 pt-5 bg-white">
-  <div class="row">
+<div class="content-wrapper mt-5 pt-4 management-page">
+<div class="row">
     <div class="col-md-8 offset-md-2 grid-margin stretch-card">
-      <div class="card shadow border-0">
+      <div class="card adx-card">
         <div class="card-body">
           <h4 class="card-title">Update Single Group</h4>
-          <p class="card-description">Update description or members for a group.</p>
+          <p class="card-description">Update description, members, scope, or type for a group.</p>
 
-          <form method="post">
+          <form method="post" id="updateGroupForm">
             {% csrf_token %}
+
             <div class="form-group">
               <label>Group Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" name="group_name" required>
+              <div class="input-group">
+                <input type="text" class="form-control" name="group_name" id="group_name" required>
+                <div class="input-group-append">
+                  <button type="button" class="btn btn-info" id="loadMembersBtn">Load Current Members</button>
+                </div>
+              </div>
+              <small class="form-text text-muted">
+                Enter the group name, then click "Load Current Members" to populate the remove-members list.
+              </small>
             </div>
+
             <div class="form-group">
               <label>Description</label>
               <textarea class="form-control" name="description" rows="2"></textarea>
             </div>
+
             <div class="form-group">
-              <label>Add Members (comma-separated usernames/computers)</label>
-              <input type="text" class="form-control" name="add_members">
+              <label>Change Scope (may be blocked by AD rules)</label>
+              <select class="form-control" name="group_scope">
+                <option value="">Keep current scope</option>
+                <option value="Global">Global</option>
+                <option value="DomainLocal">Domain Local</option>
+                <option value="Universal">Universal</option>
+              </select>
             </div>
+
             <div class="form-group">
-              <label>Remove Members (comma-separated usernames/computers)</label>
-              <input type="text" class="form-control" name="remove_members">
+              <label>Change Type</label>
+              <select class="form-control" name="group_category">
+                <option value="">Keep current type</option>
+                <option value="Security">Security</option>
+                <option value="Distribution">Distribution</option>
+              </select>
             </div>
+
+            <hr>
+
+            <div class="form-group">
+              <label>Add Members</label>
+              <input
+                type="text"
+                class="form-control"
+                id="add_member_search"
+                placeholder="Search users, computers, or groups..."
+                autocomplete="off"
+              >
+              <small class="form-text text-muted">
+                Search and select users/computers/groups to add. Search starts after 2-3 characters.
+              </small>
+
+              <div class="border rounded mt-2" style="max-height: 220px; overflow-y: auto;">
+                <ul class="list-group list-group-flush" id="searchResultsList"></ul>
+              </div>
+
+              <div class="mt-3">
+                <label class="font-weight-bold">Selected Members To Add</label>
+                <ul class="list-group" id="selectedAddMembersList"></ul>
+              </div>
+
+              <div id="addMembersHiddenContainer"></div>
+            </div>
+
+            <hr>
+
+            <div class="form-group">
+              <label>Remove Members</label>
+              <select class="form-control" id="remove_members_select" multiple size="10"></select>
+              <small class="form-text text-muted">
+                Select one or more current group members to remove.
+              </small>
+              <div id="removeMembersHiddenContainer"></div>
+            </div>
+
             <button type="submit" class="btn btn-warning">Update Group</button>
           </form>
         </div>
@@ -35,4 +258,187 @@
     </div>
   </div>
 </div>
+
+<style>
+  .search-result-item { cursor: pointer; }
+  .search-result-item:hover { background-color: #f8f9fa; }
+  .selected-member-badge { display: flex; justify-content: space-between; align-items: center; }
+</style>
+
+<script>
+  const addSearchInput = document.getElementById("add_member_search");
+  const searchResultsList = document.getElementById("searchResultsList");
+  const selectedAddMembersList = document.getElementById("selectedAddMembersList");
+  const removeMembersSelect = document.getElementById("remove_members_select");
+  const loadMembersBtn = document.getElementById("loadMembersBtn");
+  const groupNameInput = document.getElementById("group_name");
+  const form = document.getElementById("updateGroupForm");
+  const addMembersHiddenContainer = document.getElementById("addMembersHiddenContainer");
+  const removeMembersHiddenContainer = document.getElementById("removeMembersHiddenContainer");
+
+  let selectedAddMembers = [];
+
+  function rebuildAddHiddenInputs() {
+    addMembersHiddenContainer.innerHTML = "";
+    selectedAddMembers.forEach(item => {
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.name = "add_member_dns";
+      hidden.value = item.value;
+      addMembersHiddenContainer.appendChild(hidden);
+    });
+  }
+
+  function rebuildRemoveHiddenInputs() {
+    removeMembersHiddenContainer.innerHTML = "";
+    Array.from(removeMembersSelect.selectedOptions).forEach(opt => {
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.name = "remove_member_dns";
+      hidden.value = opt.value;
+      removeMembersHiddenContainer.appendChild(hidden);
+    });
+  }
+
+  function renderSelectedAddMembers() {
+    selectedAddMembersList.innerHTML = "";
+
+    if (selectedAddMembers.length === 0) {
+      const emptyItem = document.createElement("li");
+      emptyItem.className = "list-group-item text-muted";
+      emptyItem.textContent = "No members selected.";
+      selectedAddMembersList.appendChild(emptyItem);
+      rebuildAddHiddenInputs();
+      return;
+    }
+
+    selectedAddMembers.forEach((member, index) => {
+      const li = document.createElement("li");
+      li.className = "list-group-item selected-member-badge";
+
+      const textSpan = document.createElement("span");
+      textSpan.textContent = `${member.label} [${member.type}]`;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "btn btn-sm btn-danger";
+      removeBtn.textContent = "Remove";
+      removeBtn.addEventListener("click", () => {
+        selectedAddMembers.splice(index, 1);
+        renderSelectedAddMembers();
+      });
+
+      li.appendChild(textSpan);
+      li.appendChild(removeBtn);
+      selectedAddMembersList.appendChild(li);
+    });
+
+    rebuildAddHiddenInputs();
+  }
+
+  function addMemberToSelection(member) {
+    const exists = selectedAddMembers.some(item => item.value === member.value);
+    if (exists) return;
+
+    selectedAddMembers.push({
+      label: member.label,
+      value: member.value,
+      type: member.type
+    });
+
+    renderSelectedAddMembers();
+  }
+
+  function renderSearchResults(results) {
+    searchResultsList.innerHTML = "";
+
+    if (!results || results.length === 0) {
+      const li = document.createElement("li");
+      li.className = "list-group-item text-muted";
+      li.textContent = "No results found.";
+      searchResultsList.appendChild(li);
+      return;
+    }
+
+    results.forEach(member => {
+      const li = document.createElement("li");
+      li.className = "list-group-item search-result-item";
+      li.textContent = `${member.label} [${member.type}]`;
+      li.addEventListener("click", () => addMemberToSelection(member));
+      searchResultsList.appendChild(li);
+    });
+  }
+
+  let searchTimeout = null;
+  addSearchInput.addEventListener("input", function () {
+    const query = this.value.trim();
+    clearTimeout(searchTimeout);
+
+    const minLength = 3;
+    if (query.length < minLength) {
+      searchResultsList.innerHTML = "";
+      return;
+    }
+
+    searchTimeout = setTimeout(() => {
+      fetch(`{% url 'search_directory_objects_ajax' %}?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          renderSearchResults(data.results || []);
+        })
+        .catch(() => {
+          searchResultsList.innerHTML = '<li class="list-group-item text-danger">Search failed.</li>';
+        });
+    }, 400);
+  });
+
+  loadMembersBtn.addEventListener("click", function () {
+    const groupName = groupNameInput.value.trim();
+    if (!groupName) {
+      alert("Please enter a group name first.");
+      return;
+    }
+
+    removeMembersSelect.innerHTML = '<option>Loading...</option>';
+
+    fetch(`{% url 'get_group_members_ajax' %}?group_name=${encodeURIComponent(groupName)}`)
+      .then(response => response.json())
+      .then(data => {
+        removeMembersSelect.innerHTML = "";
+
+        if (!data.results || data.results.length === 0) {
+          const option = document.createElement("option");
+          option.textContent = "No members found.";
+          option.disabled = true;
+          removeMembersSelect.appendChild(option);
+          return;
+        }
+
+        data.results.forEach(member => {
+          const option = document.createElement("option");
+          option.value = member.value;
+          option.textContent = `${member.label} [${member.type}]`;
+          removeMembersSelect.appendChild(option);
+        });
+
+        rebuildRemoveHiddenInputs();
+      })
+      .catch(() => {
+        removeMembersSelect.innerHTML = "";
+        const option = document.createElement("option");
+        option.textContent = "Failed to load members.";
+        option.disabled = true;
+        removeMembersSelect.appendChild(option);
+      });
+  });
+
+  removeMembersSelect.addEventListener("change", rebuildRemoveHiddenInputs);
+
+  form.addEventListener("submit", function () {
+    rebuildAddHiddenInputs();
+    rebuildRemoveHiddenInputs();
+  });
+
+  renderSelectedAddMembers();
+</script>
 {% endblock %}

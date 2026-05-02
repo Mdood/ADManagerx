@@ -1,65 +1,241 @@
-{% extends 'layout.html' %}
+{% extends "layout.html" %}
 {% load static %}
+
+
+
+{% block extra_head %}
+<style>
+  .management-page {
+    background: #f4f8ff !important;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  .management-page .page-heading,
+  .management-page > h4,
+  .management-page .card-title {
+    color: #172554;
+    font-weight: 800;
+  }
+
+  .management-page > h4 {
+    font-size: 28px;
+    margin-bottom: 6px !important;
+  }
+
+  .management-page > p.text-muted {
+    color: #64748b !important;
+    margin-bottom: 24px;
+  }
+
+  .management-page .card,
+  .management-page .adx-card {
+    border: 1px solid rgba(37, 99, 235, 0.10) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 32px rgba(30, 64, 175, 0.10) !important;
+    overflow: hidden;
+  }
+
+  .management-page .card-body {
+    padding: 24px;
+  }
+
+  .management-page .card-header,
+  .management-page .adx-card-header {
+    background: linear-gradient(135deg, #1e3a8a, #1d4ed8) !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    padding: 18px 24px;
+  }
+
+  .management-page .card-header h4,
+  .management-page .card-header h5,
+  .management-page .card-header i,
+  .management-page .adx-card-header h4,
+  .management-page .adx-card-header h5,
+  .management-page .adx-card-header i {
+    color: #ffffff !important;
+  }
+
+  .management-page .card-description,
+  .management-page .text-muted,
+  .management-page small {
+    color: #64748b !important;
+  }
+
+  .management-page label,
+  .management-page .form-label {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .management-page .form-control,
+  .management-page select,
+  .management-page textarea,
+  .management-page input[type="file"] {
+    border-radius: 12px !important;
+    border: 1px solid #dbeafe !important;
+    min-height: 44px;
+  }
+
+  .management-page .form-control:focus,
+  .management-page select:focus,
+  .management-page textarea:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.16) !important;
+  }
+
+  .management-page .btn {
+    border-radius: 12px !important;
+    font-weight: 800;
+    padding: 9px 16px;
+  }
+
+  .management-page .btn-primary,
+  .management-page .btn-info,
+  .management-page .btn-success,
+  .management-page .btn-warning,
+  .management-page .btn-dark,
+  .management-page .btn-secondary {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+  }
+
+  .management-page .btn-primary:hover,
+  .management-page .btn-info:hover,
+  .management-page .btn-success:hover,
+  .management-page .btn-warning:hover,
+  .management-page .btn-dark:hover,
+  .management-page .btn-secondary:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+  }
+
+  .management-page .btn-outline-primary,
+  .management-page .btn-outline-info,
+  .management-page .btn-outline-success,
+  .management-page .btn-outline-warning,
+  .management-page .btn-outline-dark,
+  .management-page .btn-outline-secondary,
+  .management-page .adx-sample-btn {
+    border-color: #2563eb !important;
+    color: #1d4ed8 !important;
+    background: #ffffff !important;
+  }
+
+  .management-page .btn-outline-primary:hover,
+  .management-page .btn-outline-info:hover,
+  .management-page .btn-outline-success:hover,
+  .management-page .btn-outline-warning:hover,
+  .management-page .btn-outline-dark:hover,
+  .management-page .btn-outline-secondary:hover,
+  .management-page .adx-sample-btn:hover {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+  }
+
+  .management-page .border.rounded.bg-light,
+  .management-page .bg-light {
+    background: #eff6ff !important;
+    border-color: #dbeafe !important;
+  }
+
+  .management-page .management-action-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    height: 100%;
+  }
+
+  .management-page .management-action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(30, 64, 175, 0.14) !important;
+  }
+
+  .management-page .bulk-help-box {
+    background: #eff6ff;
+    border: 1px dashed #93c5fd;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin: 12px 0 18px;
+    color: #1e3a8a;
+    font-weight: 700;
+  }
+</style>
+{% endblock extra_head %}
 
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 bg-white">
-  <div class="row">
+<div class="row justify-content-center">
     <div class="col-md-10 col-lg-9 mx-auto">
-      <!-- Header -->
       <div class="mb-3">
-        <h4 class="mb-0">Delete Organizational Unit <span class="badge badge-danger ml-2">Dangerous</span></h4>
+        <h4 class="mb-0">
+          Delete Organizational Unit
+          <span class="badge badge-danger ml-2">Dangerous</span>
+        </h4>
       </div>
+
       <p class="text-muted mb-4">
         Permanently remove an OU and optionally its child objects. This action cannot be undone.
       </p>
 
-      <!-- Messages (success/error from backend later) -->
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-        {% endfor %}
-      {% endif %}
-
-      <div class="card shadow-sm border">
+      <div class="card adx-card">
         <div class="card-body">
           <form method="post" id="delete-ou-form" novalidate>
             {% csrf_token %}
+
             <!-- OU Target -->
             <div class="form-group">
-              <label for="ou_dn" class="font-weight-medium">OU Distinguished Name (DN)</label>
-              <input type="text" class="form-control" id="ou_dn" name="ou_dn"
-                     placeholder="e.g. OU=HR,OU=Departments,DC=example,DC=local" required>
-              <small class="form-text text-muted">
-                Paste the exact DN of the OU you want to delete.
-              </small>
+              <label for="ou_dn" class="font-weight-medium">Select OU to Delete</label>
+
+              {% if ous %}
+                <select class="form-control" id="ou_dn" name="ou_dn" required>
+                  <option value="">-- Select OU --</option>
+                  {% for ou in ous %}
+                    <option value="{{ ou.dn }}">
+                      {{ ou.ou }} — {{ ou.dn }}
+                    </option>
+                  {% endfor %}
+                </select>
+                <small class="form-text text-muted">
+                  Select the exact OU you want to delete.
+                </small>
+              {% else %}
+                <div class="alert alert-warning mb-0">
+                  No OUs found.
+                  {% if ou_error %}
+                    <br><strong>Error:</strong> {{ ou_error }}
+                  {% endif %}
+                </div>
+              {% endif %}
             </div>
 
-            <!-- Options -->
-            <div class="form-row">
-              <div class="form-group col-md-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="include_children" name="include_children">
-                  <label class="form-check-label" for="include_children">
-                    Also delete child objects (OUs, users, groups, computers)
-                  </label>
-                </div>
-                <small class="form-text text-muted">If unchecked, delete will fail if the OU is not empty.</small>
-              </div>
-              <div class="form-group col-md-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="dry_run" name="dry_run">
-                  <label class="form-check-label" for="dry_run">
-                    Dry run (preview only)
-                  </label>
-                </div>
-                <small class="form-text text-muted">Simulate and show what would be deleted without making changes.</small>
-              </div>
-            </div>
+            <!-- OPTIONS -->
+<div class="form-row align-items-start mb-3">
+  <div class="col-md-6">
+    <div class="d-flex align-items-center mb-2">
+      <input type="checkbox" id="delete_children" name="delete_children" class="mr-2">
+      <label for="delete_children" class="mb-0">
+        Also delete child objects (OUs, users, groups, computers)
+      </label>
+    </div>
+    <small class="text-muted d-block">
+      If unchecked, delete will fail if the OU is not empty.
+    </small>
+  </div>
+
+  <div class="col-md-6">
+    <div class="d-flex align-items-center mb-2">
+      <input type="checkbox" id="dry_run" name="dry_run" class="mr-2">
+      <label for="dry_run" class="mb-0">
+        Dry run (preview only)
+      </label>
+    </div>
+    <small class="text-muted d-block">
+      Simulate deletion without making changes.
+    </small>
+  </div>
+</div>
 
             <!-- Notes -->
             <div class="form-group">
@@ -73,19 +249,17 @@
               <i class="mdi mdi-alert-octagon mr-2"></i>
               <div>
                 <b>Irreversible action.</b> Deleting an OU removes it from Active Directory.
-                Ensure you have backups and the correct DN selected.
+                Ensure you selected the correct OU.
               </div>
             </div>
 
-            <!-- Confirm -->
-            <div class="form-group mb-4">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="confirm_delete" name="confirm_delete">
-                <label class="form-check-label font-weight-medium" for="confirm_delete">
-                  I understand this cannot be undone.
-                </label>
-              </div>
-            </div>
+            <!-- CONFIRM -->
+<div class="d-flex align-items-center mt-3 mb-4">
+  <input type="checkbox" id="confirm" name="confirm" class="mr-2">
+  <label for="confirm" class="mb-0 font-weight-medium">
+    I understand this cannot be undone.
+  </label>
+</div>
 
             <!-- Actions -->
             <div class="d-flex align-items-center">
@@ -98,11 +272,11 @@
         </div>
       </div>
 
-      <!-- Preview (shown only when Dry run is checked via basic JS) -->
+      <!-- Dry Run Preview -->
       <div id="dryRunPreview" class="card mt-3 d-none">
         <div class="card-body">
           <h6 class="card-title mb-2">Dry Run Preview</h6>
-          <p class="text-muted mb-2">This is a placeholder preview. Backend will populate actual impact later.</p>
+          <p class="text-muted mb-2">This is a placeholder preview. Backend can populate actual impact later.</p>
           <ul class="mb-0">
             <li><span class="text-muted">OU:</span> <span id="previewOu">—</span></li>
             <li><span class="text-muted">Child objects:</span> approx. <span id="previewChildren">—</span></li>
@@ -114,10 +288,9 @@
   </div>
 </div>
 
-<!-- Minimal page JS: enable delete button & simple dry-run preview -->
 <script>
   (function() {
-    var confirmBox = document.getElementById('confirm_delete');
+    var confirmBox = document.getElementById('confirm');
     var deleteBtn  = document.getElementById('btnDelete');
     var dryRun     = document.getElementById('dry_run');
     var ouInput    = document.getElementById('ou_dn');
@@ -128,9 +301,11 @@
     function toggleDelete() {
       deleteBtn.disabled = !confirmBox.checked;
     }
+
     function togglePreview() {
-      if (dryRun.checked && ouInput.value.trim().length > 0) {
-        prevOu.textContent = ouInput.value.trim();
+      if (dryRun.checked && ouInput && ouInput.value.trim().length > 0) {
+        var selectedText = ouInput.options[ouInput.selectedIndex].text;
+        prevOu.textContent = selectedText;
         prevKids.textContent = 'N/A';
         preview.classList.remove('d-none');
       } else {
@@ -138,9 +313,12 @@
       }
     }
 
-    confirmBox.addEventListener('change', toggleDelete);
-    dryRun.addEventListener('change', togglePreview);
-    ouInput.addEventListener('input', togglePreview);
+    if (confirmBox) confirmBox.addEventListener('change', toggleDelete);
+    if (dryRun) dryRun.addEventListener('change', togglePreview);
+    if (ouInput) ouInput.addEventListener('change', togglePreview);
+
+    toggleDelete();
+    togglePreview();
   })();
 </script>
 {% endblock %}

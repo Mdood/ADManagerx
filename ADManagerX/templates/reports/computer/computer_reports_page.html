@@ -3,54 +3,184 @@
 {% block title %}Computer Reports{% endblock %}
 
 {% block content %}
-<div class="content-wrapper mt-5 pt-5 bg-white w-auto h-auto">
-    <h4 class="mb-3">Computer Reports</h4>
-    <p class="text-muted">Select a report to view detailed computer information.</p>
-
-    <!-- General Reports -->
-    <h5 class="mt-4">General Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">All Computers</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">OS Based Report</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Workstation Computers</a></div>
+<div class="content-wrapper mt-5 pt-4 bg-white container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+        <div>
+            <h4 class="mb-1">Computer Reports</h4>
+            <p class="text-muted mb-0">View, search, and print Active Directory computer report data.</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> Print / Save PDF
+            </button>
+        </div>
     </div>
 
-    <!-- Account Status Reports -->
-    <h5 class="mt-4">Account Status Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Inactive Computers</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Active Computers</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Disabled Computers</a></div>
+    {% if error %}
+        <div class="alert alert-danger mb-3">{{ error }}</div>
+    {% endif %}
+
+    <!-- Report Sections -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">General Reports</h5>
+            <div class="row g-2 mb-4">
+                <div class="col-md-3">
+                    <a href="{% url 'computer_reports_page' %}?report=all" class="btn {% if selected_report == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">All Computers</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'computer_reports_page' %}?report=os_based" class="btn {% if selected_report == 'os_based' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">OS Based Report</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'computer_reports_page' %}?report=workstations" class="btn {% if selected_report == 'workstations' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">Workstation Computers</a>
+                </div>
+            </div>
+
+            <h5 class="mb-3">Account Status Reports</h5>
+            <div class="row g-2 mb-4">
+                <div class="col-md-3">
+                    <a href="{% url 'computer_reports_page' %}?report=inactive" class="btn {% if selected_report == 'inactive' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">Inactive Computers</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'computer_reports_page' %}?report=active" class="btn {% if selected_report == 'active' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">Active Computers</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'computer_reports_page' %}?report=disabled" class="btn {% if selected_report == 'disabled' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">Disabled Computers</a>
+                </div>
+            </div>
+
+            <h5 class="mb-3">BitLocker Reports</h5>
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <a href="{% url 'computer_reports_page' %}?report=bitlocker_keys" class="btn {% if selected_report == 'bitlocker_keys' %}btn-success{% else %}btn-outline-success{% endif %} w-100">BitLocker Recovery Keys</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'computer_reports_page' %}?report=bitlocker_enabled" class="btn {% if selected_report == 'bitlocker_enabled' %}btn-success{% else %}btn-outline-success{% endif %} w-100">BitLocker Enabled Computers</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Bitlocker Reports -->
-    <h5 class="mt-4">Bitlocker Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-dark w-100">Bitlocker Recovery Keys</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-dark w-100">Bitlocker Enabled Computers</a></div>
+    <!-- Search and Summary -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center g-3">
+                <div class="col-md-8">
+                    <input
+                        type="text"
+                        id="computerSearch"
+                        class="form-control"
+                        placeholder="Search by computer name, SAM account, description, or DN..."
+                    >
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="badge bg-primary fs-6">
+                        Showing <span id="visibleComputerCount">{{ computers|length }}</span> result{{ computers|length|pluralize }}
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <hr class="my-4">
-    <h5>All Computers (First 200)</h5>
-    <div class="table-responsive">
-        <table class="table table-sm table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Name</th>
-                    <th>sAMAccountName</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for c in computers %}
-                    <tr>
-                        <td>{{ c.name }}</td>
-                        <td>{{ c.sam }}</td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="2" class="text-muted">No data available.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Current Report Title -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="mb-1">{{ report_title }}</h5>
+            <small class="text-muted">{{ report_description }}</small>
+        </div>
+    </div>
+
+    <!-- Card Grid -->
+    <div class="row" id="computerCardsContainer">
+        {% for c in computers %}
+            <div
+                class="col-md-6 col-xl-4 mb-4 computer-card"
+                data-search="{{ c.name|default:''|lower }} {{ c.sam|default:''|lower }} {{ c.description|default:''|lower }} {{ c.dn|default:''|lower }}"
+            >
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                            <h5 class="card-title mb-0">{{ c.name|default:"No Computer Name" }}</h5>
+                            <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                {% if selected_report == "disabled" %}
+                                    <span class="badge bg-danger">Disabled</span>
+                                {% elif selected_report == "active" %}
+                                    <span class="badge bg-success">Active</span>
+                                {% elif selected_report == "inactive" %}
+                                    <span class="badge bg-warning text-dark">Inactive</span>
+                                {% elif selected_report == "bitlocker_enabled" %}
+                                    <span class="badge bg-dark">BitLocker Enabled</span>
+                                {% elif selected_report == "bitlocker_keys" %}
+                                    <span class="badge bg-dark">Recovery Key</span>
+                                {% elif selected_report == "workstations" %}
+                                    <span class="badge bg-info text-dark">Workstation</span>
+                                {% elif selected_report == "os_based" %}
+                                    <span class="badge bg-primary">OS Based</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <p class="mb-1"><strong>Computer Name:</strong> {{ c.name|default:"-" }}</p>
+                        <p class="mb-1"><strong>SAM Account:</strong> {{ c.sam|default:"-" }}</p>
+                        <p class="mb-1"><strong>Description:</strong> {{ c.description|default:"-" }}</p>
+                        <p class="mb-0"><strong>DN:</strong> <span class="small text-muted">{{ c.dn|default:"-" }}</span></p>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-light border text-muted">No data available for this report.</div>
+            </div>
+        {% endfor %}
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("computerSearch");
+    const cards = document.querySelectorAll(".computer-card");
+    const visibleCount = document.getElementById("visibleComputerCount");
+
+    function filterCards() {
+        const query = (searchInput.value || "").trim().toLowerCase();
+        let count = 0;
+
+        cards.forEach(card => {
+            const searchable = (card.dataset.search || "").toLowerCase();
+            const matched = searchable.includes(query);
+            card.style.display = matched ? "" : "none";
+            if (matched) count++;
+        });
+
+        visibleCount.textContent = count;
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", filterCards);
+    }
+});
+</script>
+
+<style>
+@media print {
+    .btn,
+    #computerSearch,
+    .navbar,
+    .sidebar,
+    footer {
+        display: none !important;
+    }
+
+    .content-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+}
+</style>
 {% endblock %}

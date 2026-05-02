@@ -3,54 +3,192 @@
 {% block title %}Group Reports{% endblock %}
 
 {% block content %}
-<div class="content-wrapper mt-5 pt-5 bg-white w-auto h-auto">
-    <h4 class="mb-3">Group Reports</h4>
-    <p class="text-muted">Select a report to view detailed group information.</p>
-
-    <!-- Member-based Reports -->
-    <h5 class="mt-4">Member-based Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Group Members</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Detailed Group Members</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Groups Without Members</a></div>
+<div class="content-wrapper mt-5 pt-4 bg-white container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+        <div>
+            <h4 class="mb-1">Group Reports</h4>
+            <p class="text-muted mb-0">View, search, and print Active Directory group report data.</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> Print / Save PDF
+            </button>
+        </div>
     </div>
 
-    <!-- General Reports -->
-    <h5 class="mt-4">General Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">All Groups</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Recently Created Groups</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Recently Modified Groups</a></div>
+    <!-- Report Sections -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Member-based Reports</h5>
+            <div class="row g-2 mb-4">
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=with_members" class="btn {% if selected_report == 'with_members' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">Groups With Members</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=detailed_members" class="btn {% if selected_report == 'detailed_members' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">Detailed Group Members</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=without_members" class="btn {% if selected_report == 'without_members' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">Groups Without Members</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=nested_groups" class="btn {% if selected_report == 'nested_groups' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">Nested Groups</a>
+                </div>
+            </div>
+
+            <h5 class="mb-3">General Reports</h5>
+            <div class="row g-2 mb-4">
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=all" class="btn {% if selected_report == 'all' %}btn-success{% else %}btn-outline-success{% endif %} w-100">All Groups</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=recently_created" class="btn {% if selected_report == 'recently_created' %}btn-success{% else %}btn-outline-success{% endif %} w-100">Recently Created Groups</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=recently_modified" class="btn {% if selected_report == 'recently_modified' %}btn-success{% else %}btn-outline-success{% endif %} w-100">Recently Modified Groups</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=without_description" class="btn {% if selected_report == 'without_description' %}btn-success{% else %}btn-outline-success{% endif %} w-100">Groups Without Description</a>
+                </div>
+            </div>
+
+            <h5 class="mb-3">Group Type Reports</h5>
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=security" class="btn {% if selected_report == 'security' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">Security Groups</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=distribution" class="btn {% if selected_report == 'distribution' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">Distribution Groups</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'group_reports_page' %}?report=large_groups" class="btn {% if selected_report == 'large_groups' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">Large Groups</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Group Type Reports -->
-    <h5 class="mt-4">Group Type Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-warning w-100">Security Groups</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-warning w-100">Distribution Groups</a></div>
+    <!-- Search and Summary -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center g-3">
+                <div class="col-md-8">
+                    <input
+                        type="text"
+                        id="groupSearch"
+                        class="form-control"
+                        placeholder="Search by group name, description, type, DN, or member..."
+                    >
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="badge bg-primary fs-6">
+                        Showing <span id="visibleCount">{{ groups|length }}</span> result{{ groups|length|pluralize }}
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <hr class="my-4">
-    <h5>All Groups (First 200)</h5>
-    <div class="table-responsive">
-        <table class="table table-sm table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for g in groups %}
-                    <tr>
-                        <td>{{ g.name }}</td>
-                        <td>{{ g.description }}</td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="2" class="text-muted">No data available.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Current Report Title -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="mb-1">{{ report_title }}</h5>
+            <small class="text-muted">{{ report_description }}</small>
+        </div>
+    </div>
+
+    <!-- Card Grid -->
+    <div class="row" id="groupCardsContainer">
+        {% for g in groups %}
+            <div
+                class="col-md-6 col-xl-4 mb-4 group-card"
+                data-search="{{ g.name|default:''|lower }} {{ g.description|default:''|lower }} {{ g.group_type_label|default:''|lower }} {{ g.dn|default:''|lower }} {{ g.member_preview|default:''|lower }}"
+            >
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                            <h5 class="card-title mb-0">{{ g.name|default:"Unnamed Group" }}</h5>
+                            <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                {% if g.is_security %}
+                                    <span class="badge bg-warning text-dark">Security</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">Distribution</span>
+                                {% endif %}
+
+                                {% if g.member_count %}
+                                    <span class="badge bg-success">{{ g.member_count }} Member{{ g.member_count|pluralize }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No Members</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <p class="mb-1"><strong>Description:</strong> {{ g.description|default:"-" }}</p>
+                        <p class="mb-1"><strong>Type:</strong> {{ g.group_type_label|default:"-" }}</p>
+                        <p class="mb-1"><strong>Created:</strong> {{ g.when_created_display|default:"-" }}</p>
+                        <p class="mb-1"><strong>Modified:</strong> {{ g.when_changed_display|default:"-" }}</p>
+                        <p class="mb-1"><strong>Members:</strong> {{ g.member_count|default:0 }}</p>
+
+                        {% if g.member_preview %}
+                            <p class="mb-1"><strong>Member Preview:</strong> {{ g.member_preview }}</p>
+                        {% endif %}
+
+                        <p class="mb-0"><strong>DN:</strong> <span class="small text-muted">{{ g.dn|default:"-" }}</span></p>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-light border text-muted">No data available for this report.</div>
+            </div>
+        {% endfor %}
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("groupSearch");
+    const cards = document.querySelectorAll(".group-card");
+    const visibleCount = document.getElementById("visibleCount");
+
+    function filterCards() {
+        const query = (searchInput.value || "").trim().toLowerCase();
+        let count = 0;
+
+        cards.forEach(card => {
+            const searchable = (card.dataset.search || "").toLowerCase();
+            const matched = searchable.includes(query);
+            card.style.display = matched ? "" : "none";
+            if (matched) count++;
+        });
+
+        visibleCount.textContent = count;
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", filterCards);
+    }
+});
+</script>
+
+<style>
+@media print {
+    .btn,
+    #groupSearch,
+    .navbar,
+    .sidebar,
+    footer {
+        display: none !important;
+    }
+
+    .content-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+}
+</style>
 {% endblock %}

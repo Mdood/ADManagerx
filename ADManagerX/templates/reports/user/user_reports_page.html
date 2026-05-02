@@ -3,60 +3,216 @@
 {% block title %}User Reports{% endblock %}
 
 {% block content %}
-<div class="content-wrapper mt-5 pt-5 bg-white w-auto h-auto">
-    <h4 class="mb-3">User Reports</h4>
-    <p class="text-muted">Select a report to view detailed information.</p>
-
-    <!-- General Reports -->
-    <h5 class="mt-4">General Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">All Users</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Users with Empty Attributes</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Users with Duplicate Attributes</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Users Without Managers</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">Manager Based Users</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-primary w-100">All Managers</a></div>
+<div class="content-wrapper mt-5 pt-4 bg-white container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+        <div>
+            <h4 class="mb-1">User Reports</h4>
+            <p class="text-muted mb-0">View, search, and print Active Directory user report data.</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> Print / Save PDF
+            </button>
+        </div>
     </div>
 
-    <!-- Logon Reports -->
-    <h5 class="mt-4">Logon Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-warning w-100">Inactive Users</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-warning w-100">Real Last Logon</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-warning w-100">Recently Logged On Users</a></div>
+    <!-- Report Sections -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">General Reports</h5>
+            <div class="row g-2 mb-4">
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=all" class="btn {% if selected_report == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">All Users</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=empty_attributes" class="btn {% if selected_report == 'empty_attributes' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">Users with Empty Attributes</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=without_managers" class="btn {% if selected_report == 'without_managers' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">Users Without Managers</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=duplicate_attributes" class="btn {% if selected_report == 'duplicate_attributes' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">Users with Duplicate Email</a>
+                </div>
+            </div>
+
+            <h5 class="mb-3">Attribute Reports</h5>
+            <div class="row g-2 mb-4">
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=without_email" class="btn {% if selected_report == 'without_email' %}btn-info{% else %}btn-outline-info{% endif %} w-100">Users Without Email</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=without_hr_id" class="btn {% if selected_report == 'without_hr_id' %}btn-info{% else %}btn-outline-info{% endif %} w-100">Users Without HR ID</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=enabled" class="btn {% if selected_report == 'enabled' %}btn-info{% else %}btn-outline-info{% endif %} w-100">Enabled Users</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=recently_created" class="btn {% if selected_report == 'recently_created' %}btn-info{% else %}btn-outline-info{% endif %} w-100">Recently Created Users</a>
+                </div>
+            </div>
+
+            <h5 class="mb-3">Logon Reports</h5>
+            <div class="row g-2 mb-4">
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=inactive" class="btn {% if selected_report == 'inactive' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">Inactive Users</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=real_last_logon" class="btn {% if selected_report == 'real_last_logon' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">Last Logon Users</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=recently_logged_on" class="btn {% if selected_report == 'recently_logged_on' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100">Recently Logged On Users</a>
+                </div>
+            </div>
+
+            <h5 class="mb-3">Account Status Reports</h5>
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=disabled" class="btn {% if selected_report == 'disabled' %}btn-success{% else %}btn-outline-success{% endif %} w-100">Disabled Users</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=locked" class="btn {% if selected_report == 'locked' %}btn-success{% else %}btn-outline-success{% endif %} w-100">Locked-out Users</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'user_reports_page' %}?report=expired" class="btn {% if selected_report == 'expired' %}btn-success{% else %}btn-outline-success{% endif %} w-100">Account Expired Users</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Account Status Reports -->
-    <h5 class="mt-4">Account Status Reports</h5>
-    <div class="row">
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Disabled Users</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Locked-out Users</a></div>
-        <div class="col-md-3 mb-3"><a href="#" class="btn btn-outline-success w-100">Account Expired Users</a></div>
+    <!-- Search and Summary -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center g-3">
+                <div class="col-md-8">
+                    <input
+                        type="text"
+                        id="userSearch"
+                        class="form-control"
+                        placeholder="Search by username, display name, email, HR ID, manager, department, or DN..."
+                    >
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="badge bg-primary fs-6">
+                        Showing <span id="visibleCount">{{ users|length }}</span> result{{ users|length|pluralize }}
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <hr class="my-4">
-    <h5>All Users (First 200)</h5>
-    <div class="table-responsive">
-        <table class="table table-sm table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Username</th>
-                    <th>Display Name</th>
-                    <th>Email</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                    <tr>
-                        <td>{{ u.username }}</td>
-                        <td>{{ u.display_name }}</td>
-                        <td>{{ u.email }}</td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="3" class="text-muted">No data available.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Current Report Title -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="mb-1">{{ report_title }}</h5>
+            <small class="text-muted">{{ report_description }}</small>
+        </div>
+    </div>
+
+    <!-- Card Grid -->
+    <div class="row" id="userCardsContainer">
+        {% for u in users %}
+            <div
+                class="col-md-6 col-xl-4 mb-4 user-card"
+                data-search="{{ u.username|default:''|lower }} {{ u.display_name|default:''|lower }} {{ u.email|default:''|lower }} {{ u.hr_id|default:''|lower }} {{ u.manager_name|default:u.manager|default:''|lower }} {{ u.department|default:''|lower }} {{ u.dn|default:''|lower }}"
+            >
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                            <h5 class="card-title mb-0">{{ u.display_name|default:u.username|default:"No Display Name" }}</h5>
+                            <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                {% if u.is_disabled %}
+                                    <span class="badge bg-danger">Disabled</span>
+                                {% else %}
+                                    <span class="badge bg-success">Enabled</span>
+                                {% endif %}
+                                {% if u.is_locked %}
+                                    <span class="badge bg-warning text-dark">Locked</span>
+                                {% endif %}
+                                {% if u.is_expired %}
+                                    <span class="badge bg-dark">Expired</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <p class="mb-1"><strong>Username:</strong> {{ u.username|default:"-" }}</p>
+                        <p class="mb-1"><strong>Email:</strong> {{ u.email|default:"-" }}</p>
+                        <p class="mb-1"><strong>HR ID:</strong> {{ u.hr_id|default:"-" }}</p>
+                        <p class="mb-1"><strong>Department:</strong> {{ u.department|default:"-" }}</p>
+                        <p class="mb-1"><strong>Manager:</strong> {{ u.manager_name|default:u.manager|default:"-" }}</p>
+
+                        {% if u.effective_last_logon_display %}
+                            <p class="mb-1"><strong>Last Logon:</strong> {{ u.effective_last_logon_display }}</p>
+                            <p class="mb-1"><strong>Logon Source:</strong> {{ u.last_logon_source|default:"-" }}</p>
+                        {% else %}
+                            <p class="mb-1"><strong>Last Logon:</strong> -</p>
+                        {% endif %}
+
+                        {% if u.when_created %}
+                            <p class="mb-1"><strong>Created:</strong> {{ u.when_created }}</p>
+                        {% endif %}
+
+                        {% if u.account_expires_display %}
+                            <p class="mb-1"><strong>Account Expires:</strong> {{ u.account_expires_display }}</p>
+                        {% endif %}
+
+                        <p class="mb-0"><strong>DN:</strong> <span class="small text-muted">{{ u.dn|default:"-" }}</span></p>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-light border text-muted">No data available for this report.</div>
+            </div>
+        {% endfor %}
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("userSearch");
+    const cards = document.querySelectorAll(".user-card");
+    const visibleCount = document.getElementById("visibleCount");
+
+    function filterCards() {
+        const query = (searchInput.value || "").trim().toLowerCase();
+        let count = 0;
+
+        cards.forEach(card => {
+            const searchable = (card.dataset.search || "").toLowerCase();
+            const matched = searchable.includes(query);
+            card.style.display = matched ? "" : "none";
+            if (matched) count++;
+        });
+
+        visibleCount.textContent = count;
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", filterCards);
+    }
+});
+</script>
+
+<style>
+@media print {
+    .btn,
+    #userSearch,
+    .navbar,
+    .sidebar,
+    footer {
+        display: none !important;
+    }
+
+    .content-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+}
+</style>
 {% endblock %}
