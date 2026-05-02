@@ -67,7 +67,8 @@ class HelpdeskProfile(models.Model):
     ou = models.CharField(max_length=255, blank=True, default="")
     scope = models.CharField(max_length=255, blank=True, default="")
     # Requires MySQL 5.7+/MariaDB 10.2.7+; otherwise change to TextField with JSON serialization.
-    permissions = models.JSONField(default=dict)  # { "users": ["create","modify"], ... }
+    permissions = models.JSONField(default=dict)  # legacy/global permissions
+    domain_permissions = models.JSONField(default=dict, blank=True)  # {"ldap_id": {"role":"helpdesk", "scope":"OU=...", "permissions": {...}}}
 
     def can(self, resource: str, action: str) -> bool:
         return action in (self.permissions or {}).get(resource, [])
@@ -89,6 +90,11 @@ def _create_helpdesk_profile(sender, instance, created, **kwargs):
 class LdapSettings(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    name = models.CharField(max_length=100, blank=True, default="")
+    domain_name = models.CharField(max_length=255, blank=True, default="")
+    is_active = models.BooleanField(default=True)
+    is_default = models.BooleanField(default=False)
 
     server_uri = models.CharField(max_length=255)                 # ldap://host:389 or ldaps://host:636
     server_name = models.CharField(max_length=255, blank=True, default="")  # e.g. DC01
@@ -113,15 +119,29 @@ class LdapSettings(models.Model):
     )
 
     def __str__(self):
-        return f"LDAP @ {self.server_uri}"
+        label = self.name or self.domain_name or self.user_domain or self.server_uri
+        return f"{label} ({self.server_uri})"
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            type(self).objects.exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
 
     @classmethod
-    def get_settings(cls):
-        return cls.objects.first()
+    def get_settings(cls, settings_id=None):
+        if settings_id:
+            obj = cls.objects.filter(pk=settings_id, is_active=True).first()
+            if obj:
+                return obj
+        return cls.objects.filter(is_active=True, is_default=True).first() or cls.objects.filter(is_active=True).first() or cls.objects.first()
 
     @classmethod
-    def is_configured(cls) -> bool:
-        obj = cls.get_settings()
+    def available_settings(cls):
+        return cls.objects.filter(is_active=True).order_by("name", "domain_name", "server_uri")
+
+    @classmethod
+    def is_configured(cls, settings_id=None) -> bool:
+        obj = cls.get_settings(settings_id=settings_id)
         if not obj:
             return False
         # user_search_base can be empty; we'll auto-resolve to the default naming context

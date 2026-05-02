@@ -13,6 +13,10 @@ SECRET_KEY = 'django-insecure-tf2h%&)+5dh%(oj1u4hg^h!t^2_kj)ybty8r%#qbc4vybo)hji
 DEBUG = True
 ALLOWED_HOSTS = []
 
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "login"
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

@@ -4,6 +4,10 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
+
+    path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
+    path('select-domain/', select_domain, name='select_domain'),
     path('', index, name='home'),
     path('ldap/setup/', ldap_setup, name='ldap_setup'),
 
@@ -75,10 +79,10 @@ urlpatterns = [
     path("reports/group/", group_reports_page, name="group_reports_page"),
 
 
-     # Admin hub & actions
+    # Admin hub & actions
     path('admin_hub/', admin_hub, name='admin_hub'),
-    path('admin/hub/create-helpdesk-user/', admin_create_helpdesk_user, name='admin_create_helpdesk_user'),
-    path('admin/hub/assign-roles/', admin_assign_roles, name='admin_assign_roles'),
-    path('admin/hub/auth-settings/', admin_auth_settings, name='admin_auth_settings'),
-    path('admin/hub/logs/', admin_logs, name='admin_logs'),
+    path('admin_hub/create-helpdesk-user/', admin_create_helpdesk_user, name='admin_create_helpdesk_user'),
+    path('admin_hub/assign-roles/', admin_assign_roles, name='admin_assign_roles'),
+    path('admin_hub/auth-settings/', admin_auth_settings, name='admin_auth_settings'),
+    path('admin_hub/logs/', admin_logs, name='admin_logs'), 
 ] + static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])

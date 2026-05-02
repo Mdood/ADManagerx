@@ -4,6 +4,24 @@ from .models import LdapSettings
 
 
 class LdapSettingsForm(forms.ModelForm):
+    name = forms.CharField(
+        required=False,
+        label="Connection Name",
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "WOLF.LOCAL / Main Domain"}),
+        help_text="Friendly name shown in the domain selector.",
+    )
+    domain_name = forms.CharField(
+        required=False,
+        label="Domain Name",
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "corp.local"}),
+        help_text="AD DNS domain name.",
+    )
+    is_active = forms.BooleanField(
+        required=False,
+        label="Active domain",
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        initial=True,
+    )
     server_ip = forms.CharField(
         required=False,
         label="Domain Controller IP",
@@ -63,6 +81,9 @@ class LdapSettingsForm(forms.ModelForm):
     class Meta:
         model = LdapSettings
         fields = [
+            "name",
+            "domain_name",
+            "is_active",
             "server_uri",
             "server_name",
             "use_ssl",
@@ -97,6 +118,11 @@ class LdapSettingsForm(forms.ModelForm):
         self.fields["server_uri"].required = False
         self.fields["bind_password"].label = "Service Account Password"
         self.fields["bind_password"].help_text = "Password for the service account above."
+
+        if instance:
+            self.fields["name"].initial = instance.name
+            self.fields["domain_name"].initial = instance.domain_name
+            self.fields["is_active"].initial = bool(instance.is_active)
 
         if instance and instance.server_uri:
             parsed = urlparse(instance.server_uri)
@@ -172,7 +198,6 @@ class LdapSettingsForm(forms.ModelForm):
         if server_ip:
             cleaned["server_uri"] = f"{scheme}://{server_ip}:{port}"
 
-        # Keep defaults if not provided; backend can auto-resolve base DN.
         if not (cleaned.get("user_search_filter") or "").strip():
             cleaned["user_search_filter"] = "(sAMAccountName={username})"
         if cleaned.get("user_search_base") is None:
@@ -181,6 +206,8 @@ class LdapSettingsForm(forms.ModelForm):
             cleaned["user_domain"] = ""
         if service_domain:
             cleaned["user_domain"] = service_domain
+            cleaned["domain_name"] = cleaned.get("domain_name") or service_domain
+            cleaned["name"] = cleaned.get("name") or service_domain.upper()
         if service_domain and service_username:
             cleaned["bind_dn"] = f"{service_username}@{service_domain}"
         if base_dn:
@@ -198,6 +225,9 @@ class LdapSettingsForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
+        instance.name = self.cleaned_data.get("name") or instance.name
+        instance.domain_name = self.cleaned_data.get("domain_name") or self.cleaned_data.get("user_domain") or instance.domain_name
+        instance.is_active = bool(self.cleaned_data.get("is_active", True))
         instance.server_uri = self.cleaned_data.get("server_uri") or instance.server_uri
         instance.server_name = self.cleaned_data.get("server_name") or instance.server_name
         instance.base_dn = self.cleaned_data.get("base_dn") or instance.base_dn
@@ -217,59 +247,18 @@ class LdapSettingsForm(forms.ModelForm):
         parts = [p.strip() for p in domain.split(".") if p.strip()]
         return ",".join([f"DC={p}" for p in parts])
 
-class CreateUserForm(forms.Form):
-    username = forms.CharField(
-        widget=forms.TextInput(attrs={"class": "form-control"})
-    )
-    first_name = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={"class": "form-control"})
-    )
-    last_name = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={"class": "form-control"})
-    )
-    email = forms.EmailField(
-        required=False,
-        widget=forms.EmailInput(attrs={"class": "form-control"})
-    )
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={"class": "form-control"})
-    )
-    phone = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={"class": "form-control"})
-    )
-    department = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={"class": "form-control"})
-    )
-    description = forms.CharField(
-        required=False,
-        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3})
-    )
-    target_ou_dn = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={"class": "form-control"})
-    )
 
-    must_change_password = forms.BooleanField(
-        required=False,
-        label="Must change password at first logon",
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
-    )
-    user_cannot_change_password = forms.BooleanField(
-        required=False,
-        label="User cannot change password",
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
-    )
-    password_never_expires = forms.BooleanField(
-        required=False,
-        label="Password never expires",
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
-    )
-    account_disabled = forms.BooleanField(
-        required=False,
-        label="Account is disabled",
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
-    )
+class CreateUserForm(forms.Form):
+    username = forms.CharField(widget=forms.TextInput(attrs={"class": "form-control"}))
+    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={"class": "form-control"}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={"class": "form-control"}))
+    phone = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    department = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    description = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": "form-control", "rows": 3}))
+    target_ou_dn = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
+    must_change_password = forms.BooleanField(required=False, label="Must change password at first logon", widget=forms.CheckboxInput(attrs={"class": "form-check-input"}))
+    user_cannot_change_password = forms.BooleanField(required=False, label="User cannot change password", widget=forms.CheckboxInput(attrs={"class": "form-check-input"}))
+    password_never_expires = forms.BooleanField(required=False, label="Password never expires", widget=forms.CheckboxInput(attrs={"class": "form-check-input"}))
+    account_disabled = forms.BooleanField(required=False, label="Account is disabled", widget=forms.CheckboxInput(attrs={"class": "form-check-input"}))

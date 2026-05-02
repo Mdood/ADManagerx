@@ -1,18 +1,174 @@
 {% extends 'layout.html' %}
 {% load static %}
 
+
+
+{% block extra_head %}
+<style>
+  .management-page {
+    background: #f4f8ff !important;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  .management-page .page-heading,
+  .management-page > h4,
+  .management-page .card-title {
+    color: #172554;
+    font-weight: 800;
+  }
+
+  .management-page > h4 {
+    font-size: 28px;
+    margin-bottom: 6px !important;
+  }
+
+  .management-page > p.text-muted {
+    color: #64748b !important;
+    margin-bottom: 24px;
+  }
+
+  .management-page .card,
+  .management-page .adx-card {
+    border: 1px solid rgba(37, 99, 235, 0.10) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 32px rgba(30, 64, 175, 0.10) !important;
+    overflow: hidden;
+  }
+
+  .management-page .card-body {
+    padding: 24px;
+  }
+
+  .management-page .card-header,
+  .management-page .adx-card-header {
+    background: linear-gradient(135deg, #1e3a8a, #1d4ed8) !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    padding: 18px 24px;
+  }
+
+  .management-page .card-header h4,
+  .management-page .card-header h5,
+  .management-page .card-header i,
+  .management-page .adx-card-header h4,
+  .management-page .adx-card-header h5,
+  .management-page .adx-card-header i {
+    color: #ffffff !important;
+  }
+
+  .management-page .card-description,
+  .management-page .text-muted,
+  .management-page small {
+    color: #64748b !important;
+  }
+
+  .management-page label,
+  .management-page .form-label {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .management-page .form-control,
+  .management-page select,
+  .management-page textarea,
+  .management-page input[type="file"] {
+    border-radius: 12px !important;
+    border: 1px solid #dbeafe !important;
+    min-height: 44px;
+  }
+
+  .management-page .form-control:focus,
+  .management-page select:focus,
+  .management-page textarea:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.16) !important;
+  }
+
+  .management-page .btn {
+    border-radius: 12px !important;
+    font-weight: 800;
+    padding: 9px 16px;
+  }
+
+  .management-page .btn-primary,
+  .management-page .btn-info,
+  .management-page .btn-success,
+  .management-page .btn-warning,
+  .management-page .btn-dark,
+  .management-page .btn-secondary {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+  }
+
+  .management-page .btn-primary:hover,
+  .management-page .btn-info:hover,
+  .management-page .btn-success:hover,
+  .management-page .btn-warning:hover,
+  .management-page .btn-dark:hover,
+  .management-page .btn-secondary:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+  }
+
+  .management-page .btn-outline-primary,
+  .management-page .btn-outline-info,
+  .management-page .btn-outline-success,
+  .management-page .btn-outline-warning,
+  .management-page .btn-outline-dark,
+  .management-page .btn-outline-secondary,
+  .management-page .adx-sample-btn {
+    border-color: #2563eb !important;
+    color: #1d4ed8 !important;
+    background: #ffffff !important;
+  }
+
+  .management-page .btn-outline-primary:hover,
+  .management-page .btn-outline-info:hover,
+  .management-page .btn-outline-success:hover,
+  .management-page .btn-outline-warning:hover,
+  .management-page .btn-outline-dark:hover,
+  .management-page .btn-outline-secondary:hover,
+  .management-page .adx-sample-btn:hover {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+  }
+
+  .management-page .border.rounded.bg-light,
+  .management-page .bg-light {
+    background: #eff6ff !important;
+    border-color: #dbeafe !important;
+  }
+
+  .management-page .management-action-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    height: 100%;
+  }
+
+  .management-page .management-action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(30, 64, 175, 0.14) !important;
+  }
+
+  .management-page .bulk-help-box {
+    background: #eff6ff;
+    border: 1px dashed #93c5fd;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin: 12px 0 18px;
+    color: #1e3a8a;
+    font-weight: 700;
+  }
+</style>
+{% endblock extra_head %}
+
 {% block content %}
-<div class="content-wrapper mt-5 pt-5 bg-white">
-
-  {% if messages %}
-    {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-
-  <div class="row justify-content-center">
+<div class="content-wrapper mt-5 pt-4 management-page">
+<div class="row justify-content-center">
     <div class="col-lg-8 col-md-10">
-      <div class="card shadow border-0">
+      <div class="card adx-card">
         <div class="card-body p-4">
 
           <h4 class="card-title">Lock Bulk Computers</h4>
@@ -41,6 +197,9 @@
             <button type="submit" class="btn btn-dark px-4">
               Upload
             </button>
+            <a href="{% static 'samples/bulk_computer_lock_sample.xlsx' %}" class="btn btn-outline-primary btn-sm adx-sample-btn mt-3 ml-2" download>
+              <i class="mdi mdi-download mr-1"></i> Download Sample Excel
+            </a>
 
           </form>
 

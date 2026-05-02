@@ -5,6 +5,7 @@ from typing import Optional, Iterable, Sequence, List, Any
 import ssl
 import json
 import time
+import threading
 from datetime import datetime, timezone, timedelta
 
 import winrm
@@ -28,8 +29,25 @@ from .models import LdapSettings
 
 _SEARCH_CACHE = {}
 _CACHE_TTL = 45
+_ACTIVE_SETTINGS = threading.local()
 
 session = None
+
+
+def set_current_ldap_settings(settings_id):
+    """Set the LDAP settings row used by this request/thread."""
+    try:
+        _ACTIVE_SETTINGS.settings_id = int(settings_id) if settings_id else None
+    except Exception:
+        _ACTIVE_SETTINGS.settings_id = None
+
+
+def clear_current_ldap_settings():
+    _ACTIVE_SETTINGS.settings_id = None
+
+
+def get_current_ldap_settings_id():
+    return getattr(_ACTIVE_SETTINGS, "settings_id", None)
 
 
 class ADServiceError(Exception):
@@ -250,11 +268,12 @@ def _chunked(values: Sequence[str], size: int = 100) -> Iterable[List[str]]:
 # Config / connection
 # -----------------------------
 
-def _load_config() -> ADConfig:
+def _load_config(settings_id=None) -> ADConfig:
     global session
 
-    cfg_db = LdapSettings.get_settings()
-    if not cfg_db or not LdapSettings.is_configured():
+    active_settings_id = settings_id if settings_id is not None else get_current_ldap_settings_id()
+    cfg_db = LdapSettings.get_settings(settings_id=active_settings_id)
+    if not cfg_db or not LdapSettings.is_configured(settings_id=getattr(cfg_db, "id", None)):
         raise ADServiceError("LDAP settings are not configured.")
 
     bind_user = _safe_str(cfg_db.bind_dn)
@@ -380,10 +399,116 @@ def _parse_json_output(output: str):
         raise ADServiceError(f"Failed to parse PowerShell JSON output: {output}") from e
 
 
-def test_connection() -> None:
-    cfg = _load_config()
+def test_connection(settings_id=None) -> None:
+    cfg = _load_config(settings_id=settings_id)
     conn = _connect(cfg)
     conn.unbind()
+
+
+
+def list_ldap_settings() -> list[dict]:
+    return [
+        {
+            "id": obj.id,
+            "name": obj.name or obj.domain_name or obj.user_domain or obj.server_uri,
+            "domain_name": obj.domain_name or obj.user_domain,
+            "server_uri": obj.server_uri,
+            "is_default": obj.is_default,
+            "is_active": obj.is_active,
+        }
+        for obj in LdapSettings.available_settings()
+    ]
+
+def test_ldap_health(settings_id=None) -> dict:
+    """
+    Lightweight LDAP health check.
+
+    This only opens an LDAP connection, resolves the Base DN,
+    then closes the connection. It does not modify Active Directory.
+    """
+    cfg = _load_config(settings_id=settings_id)
+
+    result = {
+        "status": "Unknown",
+        "server_uri": cfg.server_uri,
+        "base_dn": cfg.base_dn,
+        "response_ms": 0,
+        "error": "",
+    }
+
+    start = time.time()
+
+    try:
+        conn = _connect(cfg)
+        try:
+            resolved_base = _resolve_base_dn(conn, cfg)
+            result["base_dn"] = resolved_base
+            result["status"] = "Connected"
+        finally:
+            conn.unbind()
+
+    except Exception as exc:
+        result["status"] = "Failed"
+        result["error"] = str(exc)
+
+    finally:
+        result["response_ms"] = int((time.time() - start) * 1000)
+
+    return result
+
+
+def test_winrm_health(settings_id=None) -> dict:
+    """
+    WinRM health check.
+
+    This runs a tiny read-only PowerShell command through WinRM.
+    It is heavier than LDAP because it uses remote PowerShell.
+    """
+    cfg = _load_config(settings_id=settings_id)
+
+    result = {
+        "status": "Unknown",
+        "server_name": cfg.server_name,
+        "safe_mode": cfg.safe_mode,
+        "response_ms": 0,
+        "error": "",
+    }
+
+    if cfg.safe_mode:
+        result["status"] = "Safe Mode"
+        result["error"] = "Safe mode is enabled, so WinRM commands are skipped."
+        return result
+
+    if not cfg.server_name:
+        result["status"] = "Not Configured"
+        result["error"] = "WinRM server_name is not configured."
+        return result
+
+    if session is None:
+        result["status"] = "Not Initialized"
+        result["error"] = "WinRM session is not initialized. Check LDAP/WinRM settings."
+        return result
+
+    start = time.time()
+
+    try:
+        output = _run_ps("Write-Output 'WINRM_OK=1'")
+
+        if "WINRM_OK=1" in output:
+            result["status"] = "Connected"
+        else:
+            result["status"] = "Unknown"
+            result["error"] = "WinRM command completed but did not return the expected response."
+
+    except Exception as exc:
+        result["status"] = "Failed"
+        result["error"] = str(exc)
+
+    finally:
+        result["response_ms"] = int((time.time() - start) * 1000)
+
+    return result
+
 
 
 # -----------------------------
@@ -919,7 +1044,7 @@ def list_ous(limit: int = 2000) -> List[dict]:
             base,
             "(|(objectClass=organizationalUnit)(objectClass=container))",
             search_scope=SUBTREE,
-            attributes=["ou", "cn", "name", "distinguishedName"],
+            attributes=["ou", "cn", "name", "distinguishedName", "description"],
             size_limit=limit,
         )
 
@@ -927,7 +1052,12 @@ def list_ous(limit: int = 2000) -> List[dict]:
         for e in conn.entries:
             dn = _entry_str(e, "distinguishedName") or _safe_str(getattr(e, "entry_dn", ""))
             name = _entry_str(e, "ou", "cn", "name") or dn
-            out.append({"ou": name, "dn": dn})
+            out.append({
+                "ou": name,
+                "name": name,
+                "dn": dn,
+                "description": _entry_str(e, "description"),
+            })
 
         out.sort(key=lambda x: _safe_lower(x.get("ou")))
         return out
@@ -960,6 +1090,658 @@ def get_ad_counts() -> dict:
         }
     finally:
         conn.unbind()
+
+def _parent_dn_from_dn(dn: str) -> str:
+    dn = _safe_str(dn)
+    if not dn or "," not in dn:
+        return ""
+    return dn.split(",", 1)[1].strip()
+
+
+def _ou_display_from_dn(dn: str) -> str:
+    dn = _safe_str(dn)
+    if not dn:
+        return "-"
+    first = dn.split(",", 1)[0]
+    if "=" in first:
+        return first.split("=", 1)[1]
+    return dn
+
+
+def _paged_entries(conn: Connection, base: str, search_filter: str, attributes: list[str]) -> list[dict]:
+    results = conn.extend.standard.paged_search(
+        search_base=base,
+        search_filter=search_filter,
+        search_scope=SUBTREE,
+        attributes=attributes,
+        paged_size=1000,
+        generator=False,
+    )
+    return [item for item in (results or []) if item.get("type") == "searchResEntry"]
+
+
+def _dash_attr(item: dict, attr_name: str, default=None):
+    attrs = item.get("attributes") or {}
+    value = attrs.get(attr_name, default)
+    return value if value is not None else default
+
+
+def _dash_str(item: dict, attr_name: str, default="") -> str:
+    value = _dash_attr(item, attr_name, default)
+    if isinstance(value, list):
+        value = value[0] if value else default
+    return _safe_str(value)
+
+
+def _dash_list(item: dict, attr_name: str) -> list[str]:
+    value = _dash_attr(item, attr_name, [])
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [_safe_str(v) for v in value if _safe_str(v)]
+    text = _safe_str(value)
+    return [text] if text else []
+
+
+def _dash_dn(item: dict) -> str:
+    return _safe_str(item.get("dn") or _dash_str(item, "distinguishedName"))
+
+
+def _dash_when_created(item: dict):
+    return _ldap_dt_to_datetime(_dash_attr(item, "whenCreated"))
+
+
+def _dash_filetime_dt(item: dict, attr_name: str):
+    return _windows_filetime_to_datetime(_filetime_to_int(_dash_attr(item, attr_name, 0)))
+
+
+def get_dashboard_data(inactive_days: int = 90, top_limit: int = 5) -> dict:
+    """Fast dashboard data using four paged LDAP searches."""
+    cfg = _load_config()
+    conn = _connect(cfg)
+    try:
+        base = _resolve_base_dn(conn, cfg)
+        threshold = _now_utc() - timedelta(days=inactive_days)
+
+        users = _paged_entries(conn, base, "(&(objectClass=user)(!(objectClass=computer)))", [
+            "sAMAccountName", "displayName", "cn", "name", "distinguishedName",
+            "userAccountControl", "lockoutTime", "lastLogonTimestamp", "whenCreated",
+        ])
+        computers = _paged_entries(conn, base, "(objectClass=computer)", [
+            "sAMAccountName", "cn", "name", "distinguishedName", "userAccountControl",
+            "lastLogonTimestamp", "operatingSystem", "whenCreated",
+        ])
+        groups = _paged_entries(conn, base, "(objectClass=group)", [
+            "cn", "name", "sAMAccountName", "distinguishedName", "member", "whenCreated",
+        ])
+        ous = _paged_entries(conn, base, "(objectClass=organizationalUnit)", [
+            "ou", "name", "distinguishedName", "whenCreated",
+        ])
+
+        disabled_users = locked_users = inactive_users = password_never_expires = 0
+        recent_users = []
+        for item in users:
+            uac = _filetime_to_int(_dash_attr(item, "userAccountControl", 0))
+            lockout_time = _filetime_to_int(_dash_attr(item, "lockoutTime", 0))
+            last_logon_dt = _dash_filetime_dt(item, "lastLogonTimestamp")
+            when_created_dt = _dash_when_created(item)
+            dn = _dash_dn(item)
+
+            disabled_users += 1 if uac & 2 else 0
+            locked_users += 1 if lockout_time > 0 else 0
+            password_never_expires += 1 if uac & 0x10000 else 0
+            inactive_users += 1 if (not last_logon_dt or last_logon_dt < threshold) else 0
+
+            recent_users.append({
+                "name": _dash_str(item, "displayName") or _dash_str(item, "cn") or _dash_str(item, "name") or _dash_str(item, "sAMAccountName"),
+                "sam": _dash_str(item, "sAMAccountName"),
+                "ou": _ou_display_from_dn(_parent_dn_from_dn(dn)),
+                "enabled": not bool(uac & 2),
+                "when_created": _datetime_to_display(when_created_dt),
+                "_created_dt": when_created_dt or datetime.min.replace(tzinfo=timezone.utc),
+            })
+
+        disabled_computers = inactive_computers = domain_controllers = 0
+        os_counts = {}
+        recent_computers = []
+        for item in computers:
+            uac = _filetime_to_int(_dash_attr(item, "userAccountControl", 0))
+            last_logon_dt = _dash_filetime_dt(item, "lastLogonTimestamp")
+            when_created_dt = _dash_when_created(item)
+            dn = _dash_dn(item)
+            os_name = _dash_str(item, "operatingSystem") or "Unknown"
+            os_counts[os_name] = os_counts.get(os_name, 0) + 1
+
+            disabled_computers += 1 if uac & 2 else 0
+            inactive_computers += 1 if (not last_logon_dt or last_logon_dt < threshold) else 0
+            domain_controllers += 1 if "ou=domain controllers" in _safe_lower(dn) else 0
+
+            recent_computers.append({
+                "name": _dash_str(item, "cn") or _dash_str(item, "name") or _dash_str(item, "sAMAccountName"),
+                "sam": _dash_str(item, "sAMAccountName"),
+                "ou": _ou_display_from_dn(_parent_dn_from_dn(dn)),
+                "os": os_name,
+                "enabled": not bool(uac & 2),
+                "when_created": _datetime_to_display(when_created_dt),
+                "_created_dt": when_created_dt or datetime.min.replace(tzinfo=timezone.utc),
+            })
+
+        top_groups = []
+        empty_groups = 0
+        for item in groups:
+            count = len(_dash_list(item, "member"))
+            empty_groups += 1 if count == 0 else 0
+            top_groups.append({
+                "name": _dash_str(item, "cn") or _dash_str(item, "name") or _dash_str(item, "sAMAccountName"),
+                "count": count,
+            })
+        top_groups = sorted(top_groups, key=lambda x: x["count"], reverse=True)[:top_limit]
+
+        ou_name_by_dn = {}
+        child_counts_by_parent = {}
+        for item in ous:
+            dn = _dash_dn(item)
+            ou_name_by_dn[_safe_lower(dn)] = _dash_str(item, "ou") or _dash_str(item, "name") or _ou_display_from_dn(dn)
+        for collection in (users, computers, groups, ous):
+            for item in collection:
+                parent_dn = _parent_dn_from_dn(_dash_dn(item))
+                if parent_dn:
+                    key = _safe_lower(parent_dn)
+                    child_counts_by_parent[key] = child_counts_by_parent.get(key, 0) + 1
+        top_ous = sorted(
+            [{"name": name, "count": child_counts_by_parent.get(dn_key, 0)} for dn_key, name in ou_name_by_dn.items()],
+            key=lambda x: x["count"],
+            reverse=True,
+        )[:top_limit]
+
+        recent_users = sorted(recent_users, key=lambda x: x["_created_dt"], reverse=True)[:top_limit]
+        recent_computers = sorted(recent_computers, key=lambda x: x["_created_dt"], reverse=True)[:top_limit]
+        for row in recent_users + recent_computers:
+            row.pop("_created_dt", None)
+
+        top_os = sorted(os_counts.items(), key=lambda x: x[1], reverse=True)[:top_limit]
+
+        return {
+            "ad_counts": {"users": len(users), "computers": len(computers), "groups": len(groups), "ous": len(ous)},
+            "user_status": {
+                "enabled": max(len(users) - disabled_users, 0),
+                "disabled": disabled_users,
+                "locked": locked_users,
+                "inactive": inactive_users,
+                "password_never_expires": password_never_expires,
+            },
+            "computer_status": {
+                "enabled": max(len(computers) - disabled_computers, 0),
+                "disabled": disabled_computers,
+                "inactive": inactive_computers,
+                "domain_controllers": domain_controllers,
+            },
+            "top_ous": top_ous,
+            "top_groups": top_groups,
+            "computer_os": {"labels": [x[0] for x in top_os], "data": [x[1] for x in top_os]},
+            "security_alerts": [
+                {"name": "Disabled users", "count": disabled_users, "level": "danger" if disabled_users else "success", "status": "Review" if disabled_users else "OK"},
+                {"name": "Locked users", "count": locked_users, "level": "warning" if locked_users else "success", "status": "Unlock" if locked_users else "OK"},
+                {"name": f"Inactive users ({inactive_days}+ days)", "count": inactive_users, "level": "warning" if inactive_users else "success", "status": "Review" if inactive_users else "OK"},
+                {"name": "Password never expires", "count": password_never_expires, "level": "warning" if password_never_expires else "success", "status": "Risk" if password_never_expires else "OK"},
+                {"name": "Disabled computers", "count": disabled_computers, "level": "danger" if disabled_computers else "success", "status": "Review" if disabled_computers else "OK"},
+                {"name": "Empty groups", "count": empty_groups, "level": "warning" if empty_groups else "success", "status": "Cleanup" if empty_groups else "OK"},
+            ],
+            "recent_users": recent_users,
+            "recent_computers": recent_computers,
+        }
+    finally:
+        conn.unbind()
+
+
+
+
+def _computer_to_report_dict(conn: Connection, entry) -> dict:
+    """Normalize a computer LDAP entry into a template-safe report dictionary."""
+    user_account_control = _filetime_to_int(_entry_value(entry, "userAccountControl", default=0))
+    last_logon_timestamp = _filetime_to_int(_entry_value(entry, "lastLogonTimestamp", default=0))
+    last_logon = _filetime_to_int(_entry_value(entry, "lastLogon", default=0))
+
+    effective_last_logon_raw = 0
+    last_logon_source = ""
+
+    if last_logon_timestamp > 0:
+        effective_last_logon_raw = last_logon_timestamp
+        last_logon_source = "lastLogonTimestamp"
+    elif last_logon > 0:
+        effective_last_logon_raw = last_logon
+        last_logon_source = "lastLogon"
+
+    effective_last_logon_dt = _windows_filetime_to_datetime(effective_last_logon_raw)
+    when_created_dt = _ldap_dt_to_datetime(_entry_value(entry, "whenCreated"))
+    when_changed_dt = _ldap_dt_to_datetime(_entry_value(entry, "whenChanged"))
+
+    dn = _entry_str(entry, "distinguishedName") or _safe_str(getattr(entry, "entry_dn", ""))
+    os_name = _entry_str(entry, "operatingSystem")
+    recovery_key = ""
+    recovery_key_created = ""
+
+    # BitLocker recovery passwords are usually stored as child msFVE-RecoveryInformation objects.
+    # This query is best-effort and safely returns empty values if the account has no permission
+    # or if no BitLocker recovery objects exist below the computer object.
+    if dn:
+        try:
+            conn.search(
+                search_base=dn,
+                search_filter="(objectClass=msFVE-RecoveryInformation)",
+                search_scope=SUBTREE,
+                attributes=["msFVE-RecoveryPassword", "whenCreated", "distinguishedName"],
+                size_limit=5,
+            )
+            recovery_entries = list(conn.entries or [])
+            recovery_entries.sort(
+                key=lambda x: _safe_str(_entry_value(x, "whenCreated")),
+                reverse=True,
+            )
+            if recovery_entries:
+                latest = recovery_entries[0]
+                recovery_key = _entry_str(latest, "msFVE-RecoveryPassword")
+                recovery_key_created_dt = _ldap_dt_to_datetime(_entry_value(latest, "whenCreated"))
+                recovery_key_created = _datetime_to_display(recovery_key_created_dt)
+        except Exception:
+            recovery_key = ""
+            recovery_key_created = ""
+
+    return {
+        "name": _entry_str(entry, "cn", "name", "sAMAccountName"),
+        "sam": _entry_str(entry, "sAMAccountName"),
+        "dn": dn,
+        "description": _entry_str(entry, "description"),
+        "dns_host_name": _entry_str(entry, "dNSHostName"),
+        "os": os_name,
+        "operating_system": os_name,
+        "os_version": _entry_str(entry, "operatingSystemVersion"),
+        "user_account_control": user_account_control,
+        "is_disabled": bool(user_account_control & 2),
+        "is_active": not bool(user_account_control & 2),
+        "last_logon": effective_last_logon_raw,
+        "last_logon_display": _datetime_to_display(effective_last_logon_dt),
+        "last_logon_source": last_logon_source,
+        "when_created_dt": when_created_dt,
+        "when_changed_dt": when_changed_dt,
+        "when_created": _datetime_to_display(when_created_dt),
+        "when_changed": _datetime_to_display(when_changed_dt),
+        "recovery_key": recovery_key,
+        "bitlocker_recovery_key": recovery_key,
+        "recovery_key_created": recovery_key_created,
+        "has_bitlocker_key": bool(recovery_key),
+    }
+
+
+def list_computers_detailed(limit: int = 5000) -> list[dict]:
+    cfg = _load_config()
+    conn = _connect(cfg)
+    try:
+        base = _resolve_base_dn(conn, cfg)
+        conn.search(
+            base,
+            "(objectClass=computer)",
+            search_scope=SUBTREE,
+            attributes=[
+                "sAMAccountName",
+                "cn",
+                "name",
+                "distinguishedName",
+                "description",
+                "dNSHostName",
+                "operatingSystem",
+                "operatingSystemVersion",
+                "userAccountControl",
+                "lastLogonTimestamp",
+                "lastLogon",
+                "whenCreated",
+                "whenChanged",
+            ],
+            size_limit=limit,
+        )
+
+        computers = [_computer_to_report_dict(conn, e) for e in conn.entries]
+        computers.sort(key=lambda x: _safe_lower(x.get("name")))
+        return computers
+    finally:
+        conn.unbind()
+
+
+def get_computer_report_data(report_type: str = "all") -> list[dict]:
+    computers = list_computers_detailed()
+    report_type = _safe_lower(report_type) or "all"
+
+    if report_type == "all":
+        return computers
+
+    if report_type == "os_based":
+        return [c for c in computers if _safe_str(c.get("os"))]
+
+    if report_type == "workstations":
+        out = []
+        for c in computers:
+            os_name = _safe_lower(c.get("os"))
+            dn = _safe_lower(c.get("dn"))
+            is_server = "server" in os_name or "domain controllers" in dn
+            if os_name and not is_server:
+                out.append(c)
+        return out
+
+    if report_type == "inactive":
+        threshold = _now_utc() - timedelta(days=90)
+        out = []
+        for c in computers:
+            raw = _filetime_to_int(c.get("last_logon"))
+            dt = _windows_filetime_to_datetime(raw)
+            if not dt or dt < threshold:
+                out.append(c)
+        return out
+
+    if report_type == "active":
+        return [c for c in computers if not c.get("is_disabled")]
+
+    if report_type == "disabled":
+        return [c for c in computers if c.get("is_disabled")]
+
+    if report_type == "bitlocker_keys":
+        return [c for c in computers if c.get("has_bitlocker_key")]
+
+    if report_type == "bitlocker_enabled":
+        return [c for c in computers if c.get("has_bitlocker_key")]
+
+    return computers
+
+
+def _get_ou_protection_map_winrm(cfg: ADConfig) -> dict[str, bool]:
+    """Best-effort OU protection lookup using AD PowerShell when WinRM is configured."""
+    if not cfg.server_name or session is None:
+        return {}
+
+    server_esc = _ps_escape_single_quotes(cfg.server_name)
+    ps = f"""
+$ErrorActionPreference = 'Stop'
+Import-Module ActiveDirectory
+Get-ADOrganizationalUnit -Filter * -Server '{server_esc}' -Properties ProtectedFromAccidentalDeletion |
+    Select-Object DistinguishedName,ProtectedFromAccidentalDeletion |
+    ConvertTo-Json -Depth 3
+"""
+    try:
+        data = _parse_json_output(_run_ps(ps))
+        return {
+            _safe_lower(item.get("DistinguishedName")): bool(item.get("ProtectedFromAccidentalDeletion"))
+            for item in data
+            if _safe_str(item.get("DistinguishedName"))
+        }
+    except Exception:
+        return {}
+
+
+def _count_immediate_children(conn: Connection, ou_dn: str, search_filter: str) -> int:
+    try:
+        conn.search(
+            search_base=ou_dn,
+            search_filter=search_filter,
+            search_scope=LEVEL,
+            attributes=["distinguishedName"],
+            size_limit=0,
+        )
+        return len(conn.entries or [])
+    except Exception:
+        return 0
+
+
+def _ou_entry_to_report_dict(entry, include_dates: bool = True) -> dict:
+    dn = _entry_str(entry, "distinguishedName") or _safe_str(getattr(entry, "entry_dn", ""))
+    when_created_dt = _ldap_dt_to_datetime(_entry_value(entry, "whenCreated")) if include_dates else None
+    when_changed_dt = _ldap_dt_to_datetime(_entry_value(entry, "whenChanged")) if include_dates else None
+    gp_link = _entry_str(entry, "gPLink")
+
+    return {
+        "name": _entry_str(entry, "ou", "cn", "name") or dn,
+        "ou": _entry_str(entry, "ou", "cn", "name") or dn,
+        "description": _entry_str(entry, "description"),
+        "dn": dn,
+        "when_created_dt": when_created_dt,
+        "when_changed_dt": when_changed_dt,
+        "when_created": _datetime_to_display(when_created_dt),
+        "when_changed": _datetime_to_display(when_changed_dt),
+        "gp_link": gp_link,
+        "users_count": 0,
+        "computers_count": 0,
+        "groups_count": 0,
+        "child_ous_count": 0,
+        "total_count": 0,
+        "is_empty": False,
+        "is_protected": False,
+        "is_unprotected": False,
+        "has_gpo_link": bool(gp_link),
+    }
+
+
+def _search_ou_entries(conn: Connection, base: str, search_filter: str = "(objectClass=organizationalUnit)", limit: int = 5000):
+    conn.search(
+        base,
+        search_filter,
+        search_scope=SUBTREE,
+        attributes=[
+            "ou",
+            "cn",
+            "name",
+            "description",
+            "distinguishedName",
+            "whenCreated",
+            "whenChanged",
+            "gPLink",
+        ],
+        size_limit=limit,
+    )
+    return list(conn.entries or [])
+
+
+def _add_ou_counts(conn: Connection, ou: dict) -> dict:
+    dn = _safe_str(ou.get("dn"))
+    if not dn:
+        return ou
+
+    users_count = _count_immediate_children(
+        conn,
+        dn,
+        "(&(objectClass=user)(!(objectClass=computer)))",
+    )
+    computers_count = _count_immediate_children(conn, dn, "(objectClass=computer)")
+    groups_count = _count_immediate_children(conn, dn, "(objectClass=group)")
+    child_ous_count = _count_immediate_children(conn, dn, "(objectClass=organizationalUnit)")
+    total_count = users_count + computers_count + groups_count + child_ous_count
+
+    ou.update(
+        {
+            "users_count": users_count,
+            "computers_count": computers_count,
+            "groups_count": groups_count,
+            "child_ous_count": child_ous_count,
+            "total_count": total_count,
+            "is_empty": total_count == 0,
+        }
+    )
+    return ou
+
+
+def _get_ous_with_counts(conn: Connection, base: str, limit: int = 5000) -> list[dict]:
+    entries = _search_ou_entries(conn, base, limit=limit)
+    ous = [_ou_entry_to_report_dict(e) for e in entries]
+
+    for ou in ous:
+        _add_ou_counts(conn, ou)
+
+    ous.sort(key=lambda x: _safe_lower(x.get("name")))
+    return ous
+
+
+def list_ous_detailed(limit: int = 5000, include_counts: bool = False, include_protection: bool = False) -> list[dict]:
+    """
+    Fast OU list for reports.
+
+    Important:
+    - Counts are expensive because they require child searches per OU.
+    - Protection requires WinRM/AD PowerShell.
+    - Both are optional so normal reports load quickly.
+    """
+    cfg = _load_config()
+    conn = _connect(cfg)
+    try:
+        base = _resolve_base_dn(conn, cfg)
+        entries = _search_ou_entries(conn, base, limit=limit)
+        ous = [_ou_entry_to_report_dict(e) for e in entries]
+
+        if include_counts:
+            for ou in ous:
+                _add_ou_counts(conn, ou)
+
+        if include_protection:
+            protection_map = _get_ou_protection_map_winrm(cfg)
+            for ou in ous:
+                protected = protection_map.get(_safe_lower(ou.get("dn")), False)
+                ou["is_protected"] = protected
+                ou["is_unprotected"] = not protected
+
+        ous.sort(key=lambda x: _safe_lower(x.get("name")))
+        return ous
+    finally:
+        conn.unbind()
+
+
+def get_ou_report_data(report_type: str = "all") -> list[dict]:
+    """
+    Return OU report data using the fastest possible path for each report.
+
+    Fast reports do one LDAP search:
+    - all
+    - recently_created
+    - recently_modified
+    - gpo_linked
+
+    Expensive reports only do expensive work when selected:
+    - counts / empty: per-OU immediate child counts
+    - protected / unprotected: one WinRM PowerShell protection lookup
+    """
+    report_type = _safe_lower(report_type) or "all"
+
+    cfg = _load_config()
+    conn = _connect(cfg)
+
+    try:
+        base = _resolve_base_dn(conn, cfg)
+
+        if report_type == "gpo_linked":
+            entries = _search_ou_entries(
+                conn,
+                base,
+                search_filter="(&(objectClass=organizationalUnit)(gPLink=*))",
+            )
+            ous = [_ou_entry_to_report_dict(e) for e in entries]
+            ous.sort(key=lambda x: _safe_lower(x.get("name")))
+            return ous
+
+        entries = _search_ou_entries(conn, base)
+        ous = [_ou_entry_to_report_dict(e) for e in entries]
+
+        if report_type == "all":
+            ous.sort(key=lambda x: _safe_lower(x.get("name")))
+            return ous
+
+        if report_type == "recently_created":
+            threshold = _now_utc() - timedelta(days=30)
+            out = [
+                ou for ou in ous
+                if ou.get("when_created_dt") and ou.get("when_created_dt") >= threshold
+            ]
+            out.sort(key=lambda x: _safe_lower(x.get("name")))
+            return out
+
+        if report_type == "recently_modified":
+            threshold = _now_utc() - timedelta(days=30)
+            out = [
+                ou for ou in ous
+                if ou.get("when_changed_dt") and ou.get("when_changed_dt") >= threshold
+            ]
+            out.sort(key=lambda x: _safe_lower(x.get("name")))
+            return out
+
+        if report_type in {"counts", "empty"}:
+            for ou in ous:
+                _add_ou_counts(conn, ou)
+
+            if report_type == "empty":
+                ous = [ou for ou in ous if ou.get("is_empty")]
+
+            ous.sort(key=lambda x: _safe_lower(x.get("name")))
+            return ous
+
+        if report_type in {"protected", "unprotected"}:
+            protection_map = _get_ou_protection_map_winrm(cfg)
+            for ou in ous:
+                protected = protection_map.get(_safe_lower(ou.get("dn")), False)
+                ou["is_protected"] = protected
+                ou["is_unprotected"] = not protected
+
+            if report_type == "protected":
+                ous = [ou for ou in ous if ou.get("is_protected")]
+            else:
+                ous = [ou for ou in ous if not ou.get("is_protected")]
+
+            ous.sort(key=lambda x: _safe_lower(x.get("name")))
+            return ous
+
+        ous.sort(key=lambda x: _safe_lower(x.get("name")))
+        return ous
+    finally:
+        conn.unbind()
+
+
+def get_ou_details(ou_dn: str) -> dict:
+    ou_dn = _safe_str(ou_dn)
+    if not ou_dn:
+        raise ADServiceError("OU DN is required.")
+
+    cfg = _load_config()
+    conn = _connect(cfg)
+    try:
+        conn.search(
+            search_base=ou_dn,
+            search_filter="(objectClass=organizationalUnit)",
+            search_scope=BASE,
+            attributes=[
+                "ou",
+                "cn",
+                "name",
+                "description",
+                "distinguishedName",
+                "whenCreated",
+                "whenChanged",
+                "gPLink",
+            ],
+            size_limit=1,
+        )
+
+        if not conn.entries:
+            raise ADServiceError(f"OU not found: {ou_dn}")
+
+        e = conn.entries[0]
+        when_created_dt = _ldap_dt_to_datetime(_entry_value(e, "whenCreated"))
+        when_changed_dt = _ldap_dt_to_datetime(_entry_value(e, "whenChanged"))
+
+        return {
+            "name": _entry_str(e, "ou", "cn", "name") or ou_dn,
+            "ou": _entry_str(e, "ou", "cn", "name") or ou_dn,
+            "description": _entry_str(e, "description"),
+            "dn": _entry_str(e, "distinguishedName") or _safe_str(getattr(e, "entry_dn", "")),
+            "when_created": _datetime_to_display(when_created_dt),
+            "when_changed": _datetime_to_display(when_changed_dt),
+            "gp_link": _entry_str(e, "gPLink"),
+        }
+    finally:
+        conn.unbind()
+
 
 
 # -----------------------------

@@ -3,340 +3,332 @@
 
 {% block title %}Administration | ADManagerX{% endblock %}
 
+{% block extra_head %}
+<style>
+  .admin-page { background: #f4f8ff; }
+  .admin-hero {
+    background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+    color: #ffffff;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 14px 34px rgba(30, 64, 175, 0.18);
+  }
+  .admin-hero h3, .admin-hero p { color: #ffffff; }
+  .admin-stat-card {
+    border-radius: 16px;
+    border: 1px solid rgba(37, 99, 235, 0.10);
+    box-shadow: 0 10px 30px rgba(30, 64, 175, 0.08);
+  }
+  .admin-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  .admin-tabs .nav-link {
+    border-radius: 999px;
+    color: #1e3a8a;
+    font-weight: 700;
+    background: #ffffff;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #dbeafe;
+  }
+  .admin-tabs .nav-link.active {
+    background: #1d4ed8;
+    color: #ffffff;
+    border-color: #1d4ed8;
+  }
+  .permission-table th { color: #1e3a8a; }
+  .permission-check {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 14px;
+    margin-bottom: 8px;
+    color: #334155;
+    font-weight: 600;
+  }
+  .permission-check input { margin-right: 6px; }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .status-connected { background: #dcfce7; color: #166534; }
+  .status-failed { background: #fee2e2; color: #991b1b; }
+  .status-warning { background: #fef3c7; color: #92400e; }
+  .status-info { background: #dbeafe; color: #1e40af; }
+  .admin-table td, .admin-table th { vertical-align: middle; }
+  .health-chart-wrapper {
+    position: relative;
+    height: 260px;
+    max-height: 260px;
+    width: 100%;
+    margin-top: 16px;
+  }
+  .health-chart-wrapper canvas { max-height: 260px !important; }
+  .scope-select { min-height: 42px; }
+</style>
+{% endblock extra_head %}
+
 {% block content %}
-<div class="content-wrapper mt-5 pt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Administration</h4>
-    <div>
-      <a href="#" class="btn btn-outline-secondary btn-sm">Export Settings</a>
-      <a href="#" class="btn btn-outline-secondary btn-sm">Import Settings</a>
+<div class="content-wrapper mt-5 pt-4 admin-page">
+  <div class="admin-hero mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center">
+      <div>
+        <h3 class="mb-1">Administration Hub</h3>
+        <p class="mb-0">Manage ADManagerX system users, roles, OU scopes, permissions, domains, and health checks.</p>
+      </div>
+      <div class="mt-3 mt-md-0">
+        <a href="{% url 'ldap_setup' %}" class="btn btn-light btn-sm">
+          <i class="mdi mdi-server-security mr-1"></i> LDAP Settings
+        </a>
+        <a href="{% url 'reports_page' %}" class="btn btn-outline-light btn-sm">
+          <i class="mdi mdi-file-chart mr-1"></i> Reports
+        </a>
+      </div>
     </div>
   </div>
 
-  <!-- Tabs -->
-  <ul class="nav nav-pills mb-4" id="adminTabs" role="tablist">
-    <li class="nav-item"><a class="nav-link active" id="users-tab" data-toggle="pill" href="#users" role="tab">Create User</a></li>
-    <li class="nav-item"><a class="nav-link" id="roles-tab" data-toggle="pill" href="#roles" role="tab">Assign Roles</a></li>
-    <li class="nav-item"><a class="nav-link" id="auth-tab" data-toggle="pill" href="#auth" role="tab">Authentication (AD)</a></li>
-    <li class="nav-item"><a class="nav-link" id="logs-tab" data-toggle="pill" href="#logs" role="tab">Creation Logs</a></li>
-    <li class="nav-item"><a class="nav-link" id="health-tab" data-toggle="pill" href="#health" role="tab">System Health</a></li>
+
+  {% if active_domain %}
+    <div class="alert alert-info d-flex justify-content-between align-items-center">
+      <div>
+        <strong>Active domain:</strong> {{ active_domain.name|default:active_domain.domain_name|default:active_domain.server_uri }}
+        <span class="text-muted ml-2">{{ active_domain.server_uri }}</span>
+      </div>
+      <a href="{% url 'ldap_setup' %}?new=1" class="btn btn-sm btn-primary">Add another domain</a>
+    </div>
+  {% endif %}
+  <div class="row">
+    <div class="col-xl-3 col-md-6 grid-margin stretch-card">
+      <div class="card admin-stat-card"><div class="card-body d-flex justify-content-between align-items-center">
+        <div><p class="text-muted mb-1">System Users</p><h3 class="mb-0">{{ stats.total_users|default:0 }}</h3></div>
+        <span class="admin-stat-icon"><i class="mdi mdi-account-multiple"></i></span>
+      </div></div>
+    </div>
+    <div class="col-xl-3 col-md-6 grid-margin stretch-card">
+      <div class="card admin-stat-card"><div class="card-body d-flex justify-content-between align-items-center">
+        <div><p class="text-muted mb-1">Helpdesk Users</p><h3 class="mb-0">{{ stats.helpdesk_users|default:0 }}</h3></div>
+        <span class="admin-stat-icon"><i class="mdi mdi-headset"></i></span>
+      </div></div>
+    </div>
+    <div class="col-xl-3 col-md-6 grid-margin stretch-card">
+      <div class="card admin-stat-card"><div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <p class="text-muted mb-1">LDAP Status</p>
+          {% if health.ldap_status == "Connected" %}<span class="status-pill status-connected">Connected</span>
+          {% elif health.ldap_status == "Failed" %}<span class="status-pill status-failed">Failed</span>
+          {% else %}<span class="status-pill status-info">{{ health.ldap_status|default:"Not checked" }}</span>{% endif %}
+        </div>
+        <span class="admin-stat-icon"><i class="mdi mdi-server-security"></i></span>
+      </div></div>
+    </div>
+    <div class="col-xl-3 col-md-6 grid-margin stretch-card">
+      <div class="card admin-stat-card"><div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <p class="text-muted mb-1">WinRM Status</p>
+          {% if health.winrm_status == "Connected" %}<span class="status-pill status-connected">Connected</span>
+          {% elif health.winrm_status == "Safe Mode" %}<span class="status-pill status-warning">Safe Mode</span>
+          {% elif health.winrm_status == "Failed" %}<span class="status-pill status-failed">Failed</span>
+          {% else %}<span class="status-pill status-info">{{ health.winrm_status|default:"Not checked" }}</span>{% endif %}
+        </div>
+        <span class="admin-stat-icon"><i class="mdi mdi-console-network"></i></span>
+      </div></div>
+    </div>
+  </div>
+
+  <ul class="nav nav-pills mb-4 admin-tabs" id="adminTabs" role="tablist">
+    <li class="nav-item"><a class="nav-link active" id="overview-tab" data-toggle="pill" href="#overview" role="tab">Overview</a></li>
+    <li class="nav-item"><a class="nav-link" id="users-tab" data-toggle="pill" href="#users" role="tab">System Users</a></li>
+    <li class="nav-item"><a class="nav-link" id="create-tab" data-toggle="pill" href="#create" role="tab">Create System User</a></li>
+    <li class="nav-item"><a class="nav-link" id="roles-tab" data-toggle="pill" href="#roles" role="tab">Roles & Scopes</a></li>
+    <li class="nav-item"><a class="nav-link" id="health-tab" data-toggle="pill" href="#health" role="tab">LDAP / WinRM Health</a></li>
+    <li class="nav-item"><a class="nav-link" id="logs-tab" data-toggle="pill" href="#logs" role="tab">Admin Logs</a></li>
   </ul>
 
   <div class="tab-content" id="adminTabsContent">
-    <!-- Create Help-Desk User -->
-    <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
-      <div class="card shadow-sm border">
-        <div class="card-body">
-          <h5 class="card-title">Create User</h5>
-          <form method="post" action="{% url 'admin_create_helpdesk_user' %}">
-            {% csrf_token %}
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>Username</label>
-                  <input name="username" class="form-control" placeholder="helpdesk.john" required>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>Email</label>
-                  <input name="email" type="email" class="form-control" placeholder="john@company.com" required>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>Temporary Password</label>
-                  <input name="temp_password" type="password" class="form-control" required>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>First Name</label>
-                  <input name="first_name" class="form-control">
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>Last Name</label>
-                  <input name="last_name" class="form-control">
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label>Role</label>
-                  <select name="role" class="form-control">
-                    <option value="helpdesk">Help-Desk</option>
-                    <option value="auditor">Auditor</option>
-                    <option value="admin">Admin</option>
-                    <option value="custom">Custom</option>
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <label>Organizational Unit (OU)</label>
-                <input name="ou" class="form-control" placeholder="OU=Support,DC=corp,DC=local">
-              </div>
-              <div class="col-md-6">
-                <label>Scope (DN Filter)</label>
-                <input name="scope" class="form-control" placeholder="OU=Users,DC=corp,DC=local">
-              </div>
+    <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+      <div class="row">
+        <div class="col-xl-8 grid-margin stretch-card">
+          <div class="card"><div class="card-body">
+            <h5 class="card-title">System Summary</h5>
+            <div class="table-responsive"><table class="table table-sm admin-table"><tbody>
+              <tr><th>LDAP Server</th><td>{{ health.server_uri|default:"Not configured" }}</td></tr>
+              <tr><th>WinRM Server</th><td>{{ health.server_name|default:"Not configured" }}</td></tr>
+              <tr><th>Base DN</th><td>{{ health.base_dn|default:"Not resolved" }}</td></tr>
+              <tr><th>Safe Mode</th><td>{% if health.safe_mode %}<span class="status-pill status-warning">Enabled</span>{% else %}<span class="status-pill status-connected">Disabled</span>{% endif %}</td></tr>
+              <tr><th>LDAP Response</th><td>{{ health.ldap_response_ms|default:0 }} ms</td></tr>
+              <tr><th>WinRM Response</th><td>{{ health.winrm_response_ms|default:0 }} ms</td></tr>
+            </tbody></table></div>
+            {% if health.error %}<div class="alert alert-warning mt-3 mb-0">{{ health.error }}</div>{% endif %}
+          </div></div>
+        </div>
+        <div class="col-xl-4 grid-margin stretch-card"><div class="card"><div class="card-body">
+          <h5 class="card-title">Quick Admin Actions</h5>
+          <a href="{% url 'ldap_setup' %}" class="btn btn-primary btn-block mb-2"><i class="mdi mdi-server-security mr-1"></i> Edit LDAP Settings</a>
+          <a href="{% url 'create_single_user' %}" class="btn btn-outline-primary btn-block mb-2"><i class="mdi mdi-account-plus mr-1"></i> Create AD User</a>
+          <a href="{% url 'reports_page' %}" class="btn btn-outline-primary btn-block mb-2"><i class="mdi mdi-file-chart mr-1"></i> Open Reports</a>
+          <button type="button" class="btn btn-light btn-block" onclick="window.location.reload();"><i class="mdi mdi-refresh mr-1"></i> Refresh Admin Hub</button>
+        </div></div></div>
+      </div>
+    </div>
 
-              <!-- Permissions Matrix -->
-              <div class="col-12 pt-3">
-                <label class="d-block mb-2">Permissions</label>
+    <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
+      <div class="card shadow-sm border"><div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+          <h5 class="card-title mb-0">System Users</h5>
+          <a href="#create" data-toggle="pill" class="btn btn-primary btn-sm"><i class="mdi mdi-account-plus mr-1"></i> Create System User</a>
+        </div>
+        <div class="table-responsive"><table class="table table-sm admin-table">
+          <thead class="bg-light"><tr><th>Username</th><th>Email</th><th>Role</th><th>OU Scope</th><th>Active</th><th>Last Login</th></tr></thead>
+          <tbody>
+            {% for item in system_users %}
+              <tr>
+                <td>{{ item.user.username }}</td>
+                <td>{{ item.user.email|default:"-" }}</td>
+                <td><span class="status-pill status-info">{{ item.profile.role|default:"No Profile"|title }}</span></td>
+                <td>{{ item.profile.scope|default:"All OUs" }}</td>
+                <td>{% if item.user.is_active %}<span class="status-pill status-connected">Active</span>{% else %}<span class="status-pill status-failed">Disabled</span>{% endif %}</td>
+                <td>{{ item.user.last_login|default:"Never" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center text-muted">No system users found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table></div>
+      </div></div>
+    </div>
 
-                <div class="table-responsive">
-                  <table class="table table-sm align-middle">
-                    <thead class="bg-light">
-                      <tr>
-                        <th style="min-width:160px;">Resource</th>
-                        <th>Allowed Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for resource in resources %}
-                      <tr>
-                        <td class="text-capitalize">{{ resource }}</td>
-                        <td>
-                          <select class="form-control" name="perms_{{ resource }}[]" multiple size="6">
-                            {% for action in actions %}
-                              {% if resource == 'reports' and action != 'view_reports' %}
-                                {# Only 'view_reports' applies to reports #}
-                              {% else %}
-                                <option value="{{ action }}">{{ action|title }}</option>
-                              {% endif %}
-                            {% endfor %}
-                          </select>
-                          <small class="form-text text-muted">Hold Ctrl (Windows) / Cmd (Mac) to select multiple.</small>
-                        </td>
-                      </tr>
+    <div class="tab-pane fade" id="create" role="tabpanel" aria-labelledby="create-tab">
+      <div class="card shadow-sm border"><div class="card-body">
+        <h5 class="card-title">Create System User</h5>
+        <p class="text-muted">This creates a login account for ADManagerX, not an Active Directory user.</p>
+        <form method="post" action="{% url 'admin_create_helpdesk_user' %}">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-md-4"><div class="form-group"><label>Username</label><input name="username" class="form-control" placeholder="helpdesk.john" required></div></div>
+            <div class="col-md-4"><div class="form-group"><label>Email <span class="text-muted">(optional)</span></label><input name="email" type="email" class="form-control" placeholder="john@company.com"></div></div>
+            <div class="col-md-4"><div class="form-group"><label>Temporary Password</label><input name="temp_password" type="password" class="form-control" required></div></div>
+            <div class="col-md-4"><div class="form-group">
+              <label>Role</label>
+              <select name="role" class="form-control" id="createUserRole">
+                {% for value, label in role_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+              </select>
+              <small class="form-text text-muted">Permissions are assigned automatically based on the selected role.</small>
+            </div></div>
+            <div class="col-md-8"><div class="form-group">
+              <label>OU Scope</label>
+              <select name="scope" class="form-control scope-select">
+                <option value="">All OUs / No scope limit</option>
+                {% for ou in scope_ous %}<option value="{{ ou.dn }}">{{ ou.name|default:ou.ou }} - {{ ou.dn }}</option>{% endfor %}
+              </select>
+              <small class="form-text text-muted">This limits where the system user can work. Leave empty for no scope limit.</small>
+            </div></div>
+            <div class="col-12 pt-3" id="customPermissionsBox" style="display: none;">
+              <div class="alert alert-info">Custom permissions are only shown when the selected role is <strong>Custom</strong>.</div>
+              <div class="table-responsive"><table class="table table-sm permission-table">
+                <thead class="bg-light"><tr><th style="width: 170px;">Resource</th><th>Allowed Actions</th></tr></thead>
+                <tbody>
+                  {% for resource in resources %}
+                    <tr><td class="text-capitalize font-weight-bold">{{ resource }}</td><td>
+                      {% for action in actions %}
+                        {% if resource == "reports" and action != "view_reports" %}{% else %}
+                          <label class="permission-check"><input type="checkbox" name="perms_{{ resource }}[]" value="{{ action }}"> {{ action|title }}</label>
+                        {% endif %}
                       {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- Quick Presets -->
-                <div class="mt-2 d-flex align-items-center">
-                  <label class="mb-0 mr-2">Quick preset:</label>
-                  <select id="permPreset" class="form-control" style="max-width:240px">
-                    <option value="">— Choose preset —</option>
-                    <option value="helpdesk">Help-Desk</option>
-                    <option value="auditor">Auditor</option>
-                    <option value="admin">Admin</option>
-                    <option value="custom">Custom</option>
-                  </select>
-                  <button type="button" class="btn btn-outline-secondary btn-sm ml-2" id="applyPresetBtn">Apply</button>
-                </div>
-              </div>
+                    </td></tr>
+                  {% endfor %}
+                </tbody>
+              </table></div>
             </div>
-
-            <div class="mt-3">
-              <button class="btn btn-primary">Create User</button>
-              <a href="{% url 'admin_hub' %}" class="btn btn-light">Cancel</a>
-            </div>
-          </form>
-        </div>
-      </div>
+          </div>
+          <div class="mt-3"><button class="btn btn-primary"><i class="mdi mdi-account-plus mr-1"></i> Create System User</button><a href="{% url 'admin_hub' %}" class="btn btn-light">Cancel</a></div>
+        </form>
+      </div></div>
     </div>
 
-    <!-- Assign Roles (skeleton) -->
     <div class="tab-pane fade" id="roles" role="tabpanel" aria-labelledby="roles-tab">
-      <div class="card shadow-sm border">
-        <div class="card-body">
-          <h5 class="card-title">Assign Roles to Users</h5>
-          <form method="post" action="{% url 'admin_assign_roles' %}">
-            {% csrf_token %}
-            <div class="form-row align-items-end">
-              <div class="col-md-6">
-                <label>Find User</label>
-                <input name="query" class="form-control" placeholder="Search by username or email">
-              </div>
-              <div class="col-md-3">
-                <label>Role</label>
-                <select name="role" class="form-control">
-                  <option value="helpdesk">Help-Desk</option>
-                  <option value="auditor">Auditor</option>
-                  <option value="admin">Admin</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <button class="btn btn-warning btn-block">Assign Role</button>
-              </div>
-            </div>
-          </form>
-
-          <hr>
-          <div class="table-responsive">
-            <table class="table table-sm">
-              <thead class="bg-light">
-                <tr>
-                  <th>User</th><th>Email</th><th>Current Role</th><th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Populate with real data later -->
-              </tbody>
-            </table>
+      <div class="card shadow-sm border"><div class="card-body">
+        <h5 class="card-title">Assign Role / OU Scope to Existing User</h5>
+        <form method="post" action="{% url 'admin_assign_roles' %}">
+          {% csrf_token %}
+          <div class="row align-items-end">
+            <div class="col-md-4"><div class="form-group"><label>User</label><select name="user_id" class="form-control" required><option value="">Select user</option>{% for item in system_users %}<option value="{{ item.user.id }}">{{ item.user.username }}{% if item.user.email %} - {{ item.user.email }}{% endif %}</option>{% endfor %}</select></div></div>
+            <div class="col-md-3"><div class="form-group"><label>Role</label><select name="role" class="form-control">{% for value, label in role_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div></div>
+            <div class="col-md-5"><div class="form-group"><label>OU Scope</label><select name="scope" class="form-control scope-select"><option value="">All OUs / No scope limit</option>{% for ou in scope_ous %}<option value="{{ ou.dn }}">{{ ou.name|default:ou.ou }} - {{ ou.dn }}</option>{% endfor %}</select></div></div>
+            <div class="col-12"><button class="btn btn-warning"><i class="mdi mdi-shield-account mr-1"></i> Save Role / Scope</button></div>
           </div>
-        </div>
-      </div>
+        </form>
+        <hr>
+        <h6 class="mb-3">Current Role Assignments</h6>
+        <div class="table-responsive"><table class="table table-sm admin-table"><thead class="bg-light"><tr><th>User</th><th>Email</th><th>Role</th><th>OU Scope</th><th>Permissions</th></tr></thead><tbody>
+          {% for item in system_users %}
+            <tr><td>{{ item.user.username }}</td><td>{{ item.user.email|default:"-" }}</td><td>{{ item.profile.role|default:"No Profile"|title }}</td><td>{{ item.profile.scope|default:"All OUs" }}</td><td>{% if item.profile.permissions %}<code>{{ item.profile.permissions }}</code>{% else %}<span class="text-muted">No permissions saved</span>{% endif %}</td></tr>
+          {% empty %}<tr><td colspan="5" class="text-center text-muted">No users available.</td></tr>{% endfor %}
+        </tbody></table></div>
+      </div></div>
     </div>
 
-    <!-- Authentication (AD) -->
-    <div class="tab-pane fade" id="auth" role="tabpanel" aria-labelledby="auth-tab">
-      <div class="card shadow-sm border">
-        <div class="card-body">
-          <h5 class="card-title mb-3">Active Directory / Authentication</h5>
-          <form method="post" action="{% url 'admin_auth_settings' %}">
-            {% csrf_token %}
-            <div class="row">
-              <div class="col-md-6">
-                <h6 class="text-muted">Directory</h6>
-                <div class="form-group"><label>Domain</label><input name="domain" class="form-control" placeholder="corp.local"></div>
-                <div class="form-group"><label>LDAP URL</label><input name="ldap_url" class="form-control" placeholder="ldaps://dc1.corp.local:636"></div>
-                <div class="form-group"><label>Bind DN</label><input name="bind_dn" class="form-control" placeholder="CN=svc_adm,OU=Service,DC=corp,DC=local"></div>
-                <div class="form-group"><label>Bind Password</label><input name="bind_pw" type="password" class="form-control"></div>
-                <button name="test_connection" value="1" class="btn btn-outline-primary btn-sm">Test Connection</button>
-              </div>
-              <div class="col-md-6">
-                <h6 class="text-muted">App Authentication</h6>
-                <div class="form-group">
-                  <label>2FA</label>
-                  <select name="twofa" class="form-control">
-                    <option value="off">Off</option>
-                    <option value="totp">TOTP (Authenticator)</option>
-                    <option value="email">Email OTP</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Session Timeout (minutes)</label>
-                  <input name="session_timeout" type="number" min="5" class="form-control" value="30">
-                </div>
-                <div class="form-group">
-                  <label>Password Policy</label>
-                  <select name="pw_policy" class="form-control">
-                    <option value="default">Default</option>
-                    <option value="strong">Strong</option>
-                    <option value="very_strong">Very Strong</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div class="mt-2">
-              <button class="btn btn-primary">Save Settings</button>
-              <a href="#" class="btn btn-light">Cancel</a>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Creation Logs (skeleton) -->
-    <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="logs-tab">
-      <div class="card shadow-sm border">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title mb-0">User Creation Logs</h5>
-            <div><a href="#" class="btn btn-outline-secondary btn-sm">Export CSV</a></div>
-          </div>
-          <form class="mb-3" method="get" action="{% url 'admin_logs' %}">
-            <div class="form-row">
-              <div class="col-md-3"><input class="form-control" name="actor" placeholder="Actor"></div>
-              <div class="col-md-3"><input class="form-control" name="target" placeholder="Target User"></div>
-              <div class="col-md-3">
-                <select class="form-control" name="status">
-                  <option value="">Any Status</option>
-                  <option>Success</option>
-                  <option>Failed</option>
-                </select>
-              </div>
-              <div class="col-md-3"><button class="btn btn-light btn-block">Filter</button></div>
-            </div>
-          </form>
-          <div class="table-responsive">
-            <table class="table table-sm">
-              <thead class="bg-light">
-                <tr>
-                  <th>Timestamp</th><th>Action</th><th>Actor</th><th>Target</th><th>Status</th><th>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Fill from backend later -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- System Health -->
     <div class="tab-pane fade" id="health" role="tabpanel" aria-labelledby="health-tab">
-      <div class="card shadow-sm border">
-        <div class="card-body">
-          <h5 class="card-title mb-2">Service Metrics</h5>
-          <canvas id="healthChart" height="110"></canvas>
+      <div class="card shadow-sm border"><div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+          <div><h5 class="card-title mb-0">LDAP / WinRM Health</h5><small class="text-muted">LDAP test is lightweight. WinRM test uses remote PowerShell and may take longer.</small></div>
+          <form method="post" action="{% url 'admin_auth_settings' %}" class="d-flex flex-wrap mt-2 mt-md-0">{% csrf_token %}<button class="btn btn-outline-primary btn-sm mr-2 mb-2" name="test_ldap" value="1"><i class="mdi mdi-server-security mr-1"></i> Test LDAP</button><button class="btn btn-outline-warning btn-sm mb-2" name="test_winrm" value="1"><i class="mdi mdi-console-network mr-1"></i> Test WinRM</button></form>
         </div>
-      </div>
+        <div class="row">
+          <div class="col-md-6"><h6 class="text-muted">LDAP</h6><table class="table table-sm"><tbody><tr><th>Status</th><td>{{ health.ldap_status|default:"Not checked" }}</td></tr><tr><th>Server URI</th><td>{{ health.server_uri|default:"-" }}</td></tr><tr><th>Base DN</th><td>{{ health.base_dn|default:"-" }}</td></tr><tr><th>Response Time</th><td>{{ health.ldap_response_ms|default:0 }} ms</td></tr></tbody></table></div>
+          <div class="col-md-6"><h6 class="text-muted">WinRM</h6><table class="table table-sm"><tbody><tr><th>Status</th><td>{{ health.winrm_status|default:"Not checked" }}</td></tr><tr><th>Server Name</th><td>{{ health.server_name|default:"-" }}</td></tr><tr><th>Safe Mode</th><td>{% if health.safe_mode %}Enabled{% else %}Disabled{% endif %}</td></tr><tr><th>Response Time</th><td>{{ health.winrm_response_ms|default:0 }} ms</td></tr></tbody></table></div>
+        </div>
+        <div class="health-chart-wrapper"><canvas id="healthChart"></canvas></div>
+        {% if health.error %}<div class="alert alert-warning mt-3 mb-0">{{ health.error }}</div>{% endif %}
+      </div></div>
     </div>
 
-  </div><!-- /tab-content -->
+    <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="logs-tab">
+      <div class="card shadow-sm border"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="card-title mb-0">Admin Logs</h5><a href="{% url 'admin_logs' %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-refresh mr-1"></i> Refresh Logs</a></div>
+        <div class="table-responsive"><table class="table table-sm admin-table"><thead class="bg-light"><tr><th>Timestamp</th><th>Action</th><th>Actor</th><th>Target</th><th>Status</th><th>Details</th></tr></thead><tbody>{% for log in admin_logs %}<tr><td>{{ log.created_at }}</td><td>{{ log.action }}</td><td>{{ log.actor }}</td><td>{{ log.target }}</td><td>{{ log.status }}</td><td>{{ log.details }}</td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted">No admin logs available yet.</td></tr>{% endfor %}</tbody></table></div>
+      </div></div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  // Health chart placeholder
-  (function(){
+  (function () {
     var hc = document.getElementById('healthChart');
-    if (hc && window.Chart){
-      new Chart(hc.getContext('2d'), {
-        type: 'line',
-        data: { labels: ['1','2','3','4','5','6','7'], datasets: [{ label:'Latency (ms)', data:[0,0,0,0,0,0,0], fill:false }]},
-        options: { responsive:true, maintainAspectRatio:false }
-      });
-    }
+    if (!hc || !window.Chart) return;
+    if (window.adxHealthChart) window.adxHealthChart.destroy();
+    window.adxHealthChart = new Chart(hc.getContext('2d'), {
+      type: 'bar',
+      data: { labels: ['LDAP Response', 'WinRM Response'], datasets: [{ label: 'Response Time (ms)', data: [{{ health.ldap_response_ms|default:0 }}, {{ health.winrm_response_ms|default:0 }}], backgroundColor: ['#2563eb', '#1e40af'] }] },
+      options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, animation: { duration: 300 }, scales: { yAxes: [{ ticks: { beginAtZero: true } }] } }
+    });
   })();
 
-  // Permission presets
-  (function(){
-    const PRESETS = {
-      admin: {
-        users:     ["create","delete","modify","lock","unlock","reset"],
-        computers: ["create","delete","modify","lock","unlock","reset"],
-        ous:       ["create","delete","modify"],
-        groups:    ["create","delete","modify"],
-        reports:   ["view_reports"]
-      },
-      helpdesk: {
-        users:     ["create","modify","lock","unlock","reset"],
-        computers: ["modify","lock","unlock","reset"],
-        ous:       [],
-        groups:    ["modify"],
-        reports:   ["view_reports"]
-      },
-      auditor: {
-        users:     [],
-        computers: [],
-        ous:       [],
-        groups:    [],
-        reports:   ["view_reports"]
-      },
-      custom: {}
-    };
-
-    function setSelectValues(name, values){
-      const sel = document.querySelector(`select[name="${name}[]"]`);
-      if (!sel) return;
-      Array.from(sel.options).forEach(opt => opt.selected = values?.includes(opt.value) || false);
+  (function () {
+    const roleSelect = document.getElementById('createUserRole');
+    const customBox = document.getElementById('customPermissionsBox');
+    function clearCustomPermissions() {
+      document.querySelectorAll('input[type="checkbox"][name^="perms_"]').forEach(function (box) { box.checked = false; });
     }
-
-    document.getElementById('applyPresetBtn')?.addEventListener('click', function(){
-      const preset = document.getElementById('permPreset')?.value;
-      if (!preset || !PRESETS[preset]) return;
-      const resources = {{ resources|safe }};
-      resources.forEach(r => setSelectValues(`perms_${r}`, PRESETS[preset][r] || []));
-    });
+    function toggleCustomPermissions() {
+      if (!roleSelect || !customBox) return;
+      if (roleSelect.value === 'custom') customBox.style.display = 'block';
+      else { customBox.style.display = 'none'; clearCustomPermissions(); }
+    }
+    roleSelect?.addEventListener('change', toggleCustomPermissions);
+    toggleCustomPermissions();
   })();
 </script>
 {% endblock %}

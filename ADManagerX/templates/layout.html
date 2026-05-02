@@ -6,287 +6,1120 @@
     <!-- Required meta tags -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
     <title>{% block title %}ADManagerX{% endblock %}</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="{% static 'assets/vendors/mdi/css/materialdesignicons.min.css' %}" />
     <link rel="stylesheet" href="{% static 'assets/vendors/flag-icon-css/css/flag-icon.min.css' %}" />
     <link rel="stylesheet" href="{% static 'assets/vendors/css/vendor.bundle.base.css' %}" />
     <link rel="stylesheet" href="{% static 'assets/vendors/font-awesome/css/font-awesome.min.css' %}" />
     <link rel="stylesheet" href="{% static 'assets/vendors/bootstrap-datepicker/bootstrap-datepicker.min.css' %}" />
     <link rel="stylesheet" href="{% static 'assets/css/style.css' %}" />
+
     <link rel="shortcut icon" href="{% static 'assets/images/Wolf-Tech-ADX-Favicon.png' %}" />
+
     <style>
       :root {
-        --adx-bg: #f4f7fb;
+        --adx-bg: #f4f8ff;
+
+        --adx-blue-50: #eff6ff;
+        --adx-blue-100: #dbeafe;
+        --adx-blue-200: #bfdbfe;
+        --adx-blue-300: #93c5fd;
+        --adx-blue-400: #60a5fa;
+        --adx-blue-500: #3b82f6;
+        --adx-blue-600: #2563eb;
+        --adx-blue-700: #1d4ed8;
+        --adx-blue-800: #1e40af;
+        --adx-blue-900: #1e3a8a;
+        --adx-blue-950: #172554;
+
+        --adx-sidebar-active: linear-gradient(90deg, #3b82f6, #2563eb);
+        --adx-sidebar-hover: rgba(147, 197, 253, 0.18);
+
         --adx-card-radius: 14px;
-        --adx-shadow: 0 10px 30px rgba(23, 43, 77, 0.08);
-        --adx-border: rgba(15, 23, 42, 0.08);
+        --adx-shadow: 0 10px 30px rgba(30, 64, 175, 0.10);
+        --adx-border: rgba(37, 99, 235, 0.10);
       }
-      body { font-family: "Manrope", sans-serif; background: var(--adx-bg); }
-      .card { border-radius: var(--adx-card-radius); box-shadow: var(--adx-shadow); border-color: var(--adx-border); }
-      .card-header { border-top-left-radius: var(--adx-card-radius); border-top-right-radius: var(--adx-card-radius); }
-      .form-control, .form-control-file, .form-select {
+
+      body {
+        font-family: "Manrope", sans-serif;
+        background: var(--adx-bg);
+        color: #0f172a;
+      }
+
+      .card {
+        border-radius: var(--adx-card-radius);
+        box-shadow: var(--adx-shadow);
+        border-color: var(--adx-border);
+      }
+
+      .card-header {
+        border-top-left-radius: var(--adx-card-radius);
+        border-top-right-radius: var(--adx-card-radius);
+      }
+
+      .form-control,
+      .form-control-file,
+      .form-select {
         border-radius: 10px;
-        border-color: rgba(15, 23, 42, 0.12);
+        border-color: rgba(37, 99, 235, 0.16);
       }
-      .btn { border-radius: 10px; }
-      .sidebar { height: 100vh; position: fixed; overflow-y: auto; }
-      .page-body-wrapper { margin-left: 250px; }
-      body.sidebar-icon-only .page-body-wrapper { margin-left: 70px; } /* Width of icon-only sidebar */
-      .main-panel { transition: width 0.3s ease; }
-      body.sidebar-icon-only .main-panel { width: auto; }
-      body.sidebar-icon-only .sidebar { overflow: visible; }
-      .pt-6 { padding-top: 4rem !important; }
-      /* Let flyouts escape the collapsed sidebar */
-      body.sidebar-icon-only #sidebar .collapse {
-        position: fixed; left: 70px; top: 0; min-width: 220px;
-        background: #ffffff; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.15);
-        z-index: 1050; padding: .25rem 0;
+
+      .form-control:focus,
+      .form-select:focus {
+        border-color: var(--adx-blue-500);
+        box-shadow: 0 0 0 0.15rem rgba(59, 130, 246, 0.18);
       }
-      /* Remove default caret rotation in icon-only mode (optional, tidy) */
-      body.sidebar-icon-only .menu-arrow { display: none; }
-      /* Keep submenu links tidy */
-      body.sidebar-icon-only #sidebar .sub-menu .nav-item .nav-link { white-space: nowrap; }
+
+      .btn {
+        border-radius: 10px;
+      }
+
+      .btn-primary {
+        background: var(--adx-blue-600);
+        border-color: var(--adx-blue-600);
+      }
+
+      .btn-primary:hover {
+        background: var(--adx-blue-700);
+        border-color: var(--adx-blue-700);
+      }
+
+      /* Sidebar */
+      .sidebar {
+        height: 100vh;
+        position: fixed;
+        overflow-y: auto;
+        background: linear-gradient(180deg, var(--adx-blue-950), var(--adx-blue-900) 55%, var(--adx-blue-800)) !important;
+        box-shadow: 8px 0 26px rgba(15, 47, 104, 0.20);
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(191, 219, 254, 0.25);
+        border-radius: 999px;
+      }
+
+      .page-body-wrapper {
+        margin-left: 250px;
+        background: var(--adx-bg);
+      }
+
+      body.sidebar-icon-only .page-body-wrapper {
+        margin-left: 70px;
+      }
+
+      .main-panel {
+        transition: width 0.3s ease;
+      }
+
+      body.sidebar-icon-only .main-panel {
+        width: auto;
+      }
+
+      body.sidebar-icon-only .sidebar {
+        overflow: visible;
+      }
+
+      .pt-6 {
+        padding-top: 4rem !important;
+      }
+
+      /* Brand */
+      .sidebar-brand-wrapper {
+        background: transparent !important;
+        border-bottom: 1px solid rgba(191, 219, 254, 0.12);
+      }
+
+      .adx-brand-text {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 22px;
+        letter-spacing: -0.5px;
+        color: #ffffff !important;
+        width: 100%;
+      }
+
+      .adx-brand-text::after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: var(--adx-blue-300);
+        border-radius: 999px;
+        margin-left: 8px;
+        box-shadow: 0 0 0 5px rgba(147, 197, 253, 0.14);
+      }
+
+      .adx-brand-mini {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 16px;
+        color: #ffffff !important;
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--adx-blue-500), var(--adx-blue-700));
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.35);
+      }
+
+      /* Sidebar links */
+      .sidebar .nav {
+        padding-bottom: 24px;
+      }
+
+      .sidebar .nav .nav-item .nav-link {
+        color: #ffffff !important;
+        border-radius: 12px;
+        margin: 3px 14px;
+        padding: 12px 16px;
+        transition: all 0.2s ease;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .sidebar .nav .nav-item .nav-link .menu-icon,
+      .sidebar .nav .nav-item .nav-link .menu-title,
+      .sidebar .nav .nav-item .nav-link .menu-arrow {
+        color: #ffffff !important;
+      }
+
+      .sidebar .nav .nav-item .nav-link:hover {
+        background: var(--adx-sidebar-hover);
+        color: #ffffff !important;
+        transform: translateX(2px);
+      }
+
+      .sidebar .nav .nav-item .nav-link:hover .menu-icon,
+      .sidebar .nav .nav-item .nav-link:hover .menu-title,
+      .sidebar .nav .nav-item .nav-link:hover .menu-arrow {
+        color: #ffffff !important;
+      }
+
+      .sidebar .nav .nav-item.active > .nav-link {
+        background: var(--adx-sidebar-active);
+        color: #ffffff !important;
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.30);
+      }
+
+      .sidebar .nav .nav-item.active > .nav-link .menu-icon,
+      .sidebar .nav .nav-item.active > .nav-link .menu-title,
+      .sidebar .nav .nav-item.active > .nav-link .menu-arrow {
+        color: #ffffff !important;
+      }
+
+      .sidebar .nav .nav-item .nav-link[aria-expanded="true"] {
+        background: rgba(147, 197, 253, 0.16);
+        color: #ffffff !important;
+      }
+
+      .sidebar .nav .nav-item .nav-link[aria-expanded="true"] .menu-icon,
+      .sidebar .nav .nav-item .nav-link[aria-expanded="true"] .menu-title,
+      .sidebar .nav .nav-item .nav-link[aria-expanded="true"] .menu-arrow {
+        color: #ffffff !important;
+      }
+
+      .sidebar-section-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #ffffff !important;
+        padding: 18px 28px 8px;
+        font-weight: 800;
+        opacity: 0.75;
+      }
+
+      .sidebar .sub-menu {
+        background: rgba(15, 47, 104, 0.32);
+        border-radius: 12px;
+        margin: 4px 14px 8px;
+        padding: 8px 0;
+      }
+
+      .sidebar .sub-menu .nav-item .nav-link {
+        color: #ffffff !important;
+        margin: 2px 8px;
+        padding: 9px 14px 9px 34px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+      }
+
+      .sidebar .sub-menu .nav-item .nav-link:hover {
+        background: rgba(191, 219, 254, 0.13);
+        color: #ffffff !important;
+      }
+
+      .sub-menu .nav-link.active-sub-link {
+        background: rgba(96, 165, 250, 0.22);
+        color: #ffffff !important;
+        font-weight: 800;
+      }
+
+      .sidebar .sub-menu .nav-link i {
+        font-size: 16px;
+        width: 20px;
+        min-width: 20px;
+        color: #ffffff !important;
+        opacity: 0.95;
+      }
+
+      .sidebar .sub-menu .nav-link:hover i,
+      .sidebar .sub-menu .nav-link.active-sub-link i {
+        color: #ffffff !important;
+        opacity: 1;
+      }
+
+      /* Navbar */
+      .navbar,
+      .navbar .navbar-menu-wrapper {
+        background: linear-gradient(90deg, #1e3a8a, #1d4ed8) !important;
+      }
+
+      .navbar {
+        box-shadow: 0 8px 26px rgba(30, 64, 175, 0.12);
+        border-bottom: 1px solid rgba(191, 219, 254, 0.16);
+      }
+
+      .navbar,
+      .navbar .nav-link,
+      .navbar .nav-link:hover,
+      .navbar-toggler,
+      .navbar-toggler i,
+      .navbar-toggler span,
+      .adx-navbar-title,
+      .adx-navbar-subtitle,
+      .profile-name {
+        color: #ffffff !important;
+      }
+
+      .navbar-toggler {
+        color: #ffffff !important;
+      }
+
+      .adx-navbar-title {
+        font-size: 15px;
+        font-weight: 800;
+        margin-bottom: 0;
+      }
+
+      .adx-navbar-subtitle {
+        font-size: 12px;
+        margin-bottom: 0;
+        opacity: 0.85;
+      }
+
+      .adx-search-box {
+        min-width: 320px;
+        max-width: 430px;
+        position: relative;
+      }
+
+      .adx-search-box input {
+        border-radius: 999px;
+        padding-left: 42px;
+        height: 42px;
+        background: rgba(255, 255, 255, 0.14) !important;
+        border-color: rgba(255, 255, 255, 0.25) !important;
+        color: #ffffff !important;
+      }
+
+      .adx-search-box input::placeholder {
+        color: rgba(255, 255, 255, 0.75) !important;
+      }
+
+      .adx-search-box i {
+        position: absolute;
+        left: 16px;
+        top: 12px;
+        color: #ffffff !important;
+        z-index: 2;
+      }
+      .adx-domain-select {
+        max-width: 230px;
+        height: 38px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.14) !important;
+        border: 1px solid rgba(255,255,255,0.25) !important;
+        color: #ffffff !important;
+        font-weight: 700;
+        padding: 0 14px;
+      }
+      .adx-domain-select option { color: #0f172a; }
+
+
+      .navbar-nav-right {
+        margin-left: auto !important;
+      }
+
+      .navbar-nav-right .nav-item {
+        display: flex;
+        align-items: center;
+      }
+
+      .navbar-nav-right .nav-link {
+        display: flex;
+        align-items: center;
+      }
+
+      .navbar-nav-right .mdi-bell-outline {
+        font-size: 24px;
+      }
+
+      .navbar-nav-right .dropdown-menu-right {
+        right: 0;
+        left: auto;
+      }
+
+      #notificationDropdown {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.14);
+        justify-content: center;
+      }
+
+      #notificationDropdown:hover {
+        background: rgba(255, 255, 255, 0.22);
+      }
+
+      .adx-alert-dot {
+        width: 10px;
+        height: 10px;
+        background: #93c5fd;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.20);
+      }
+
+      .dropdown-menu {
+        border: 1px solid var(--adx-blue-100);
+        border-radius: 14px;
+        box-shadow: 0 16px 38px rgba(30, 64, 175, 0.14);
+      }
+
+      .navbar-dropdown .dropdown-item:hover {
+        background: var(--adx-blue-50);
+      }
+
+      .preview-icon.bg-warning,
+      .preview-icon.bg-danger,
+      .preview-icon.bg-info,
+      .preview-icon.bg-primary {
+        background: linear-gradient(135deg, var(--adx-blue-500), var(--adx-blue-700)) !important;
+      }
+
+      .badge-primary,
+      .badge-info,
+      .badge-success,
+      .badge-warning {
+        background: var(--adx-blue-600) !important;
+        color: #ffffff;
+      }
+
+      .adx-profile-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        margin-right: 8px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+      }
+
+      .profile-name {
+        font-weight: 700;
+      }
+
+      .content-wrapper {
+        min-height: 100vh;
+        background: var(--adx-bg) !important;
+      }
+
+      /* Top centered page notifications */
+.messages-wrapper {
+  position: fixed;
+  top: 82px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(760px, calc(100% - 320px));
+  z-index: 3000;
+  pointer-events: none;
+}
+
+.messages-wrapper .alert {
+  pointer-events: auto;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(191, 219, 254, 0.45);
+  padding: 15px 52px 15px 18px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.messages-wrapper .alert .close {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  opacity: 0.8;
+}
+
+.messages-wrapper .alert-success {
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.messages-wrapper .alert-info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.messages-wrapper .alert-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.messages-wrapper .alert-danger,
+.messages-wrapper .alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+body.sidebar-icon-only .messages-wrapper {
+  width: min(760px, calc(100% - 140px));
+}
+
+@media (max-width: 991px) {
+  .messages-wrapper {
+    top: 76px;
+    width: calc(100% - 28px);
+  }
+}
+
+      .alert-success,
+      .alert-info,
+      .alert-warning,
+      .alert-danger {
+        background: var(--adx-blue-50);
+        color: var(--adx-blue-950);
+      }
+
+      /* Minimized sidebar fixes */
+      body.sidebar-icon-only .sidebar .menu-title,
+      body.sidebar-icon-only .sidebar .sidebar-section-title,
+      body.sidebar-icon-only .sidebar .adx-brand-text {
+        display: none !important;
+      }
+
+      body.sidebar-icon-only .sidebar .nav .nav-item .nav-link {
+        justify-content: center !important;
+        padding: 14px 0 !important;
+        margin: 4px 10px !important;
+        width: 50px !important;
+        height: 48px !important;
+        border-radius: 14px !important;
+      }
+
+      body.sidebar-icon-only .sidebar .nav .nav-item .nav-link .menu-icon {
+        margin-right: 0 !important;
+        font-size: 22px !important;
+        line-height: 1 !important;
+      }
+
+      body.sidebar-icon-only .sidebar .menu-arrow {
+        display: none !important;
+      }
+
+      body.sidebar-icon-only .sidebar .collapse:not(.show) {
+        display: none !important;
+      }
+
+      body.sidebar-icon-only .sidebar-brand-wrapper {
+        justify-content: center !important;
+      }
+
+      body.sidebar-icon-only .sidebar .brand-logo {
+        display: none !important;
+      }
+
+      body.sidebar-icon-only .sidebar .brand-logo-mini {
+        display: flex !important;
+        justify-content: center !important;
+        padding-left: 0 !important;
+        width: 100%;
+      }
+
+      body.sidebar-icon-only #sidebar .collapse.show {
+        position: fixed !important;
+        left: 72px !important;
+        min-width: 240px !important;
+        background: #1e3a8a !important;
+        border: 1px solid rgba(191, 219, 254, 0.18) !important;
+        border-radius: 14px !important;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.28) !important;
+        z-index: 2000 !important;
+        padding: 8px !important;
+      }
+
+      body.sidebar-icon-only #sidebar .collapse.show .sub-menu {
+        background: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      body.sidebar-icon-only #sidebar .collapse.show .sub-menu .nav-item .nav-link {
+        width: auto !important;
+        height: auto !important;
+        justify-content: flex-start !important;
+        padding: 10px 14px !important;
+        margin: 2px 0 !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+        border-radius: 10px !important;
+      }
+
+      body.sidebar-icon-only #sidebar .collapse.show .sub-menu .nav-item .nav-link i {
+        margin-right: 8px !important;
+      }
+
+      body.sidebar-icon-only #sidebar .collapse,
+      body.sidebar-icon-only #sidebar .collapse .nav-link,
+      body.sidebar-icon-only #sidebar .collapse .nav-link:hover,
+      body.sidebar-icon-only #sidebar .collapse .active-sub-link {
+        color: #ffffff !important;
+      }
+
+      @media (max-width: 991px) {
+        .page-body-wrapper {
+          margin-left: 0;
+        }
+
+        .adx-search-box {
+          display: none;
+        }
+
+        .messages-wrapper {
+          margin: 80px 14px -65px 14px;
+        }
+      }
     </style>
 
-    {# NEW: per-page head injections (extra CSS/meta) #}
     {% block extra_head %}{% endblock extra_head %}
   </head>
+
   <body>
     <div class="container-scroller">
+
+      <!-- Sidebar -->
       <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <div class="text-center sidebar-brand-wrapper d-flex align-items-center">
-          <a class="sidebar-brand brand-logo pt-6" href="{% url 'home' %}">
-            {#<img src="{% static 'assets/images/Wolf-Tech-ADX-Transparent.png' %}" alt="logo" class="img-fluid d-block mx-auto" style="width: 145px; height: auto;" />#}
+          <a class="sidebar-brand brand-logo pt-4" href="{% url 'home' %}">
+            <span class="adx-brand-text">ADManagerX</span>
           </a>
-          <a class="sidebar-brand brand-logo-mini pl-2 pt-6" href="{% url 'home' %}">
-            {#<img src="{% static 'assets/images/Wolf-Tech-ADX-Transparent-mini.png' %}" style="width: 75px; height: auto;" alt="logo" />#}
+
+          <a class="sidebar-brand brand-logo-mini pl-2 pt-4" href="{% url 'home' %}">
+            <span class="adx-brand-mini">ADX</span>
           </a>
         </div>
+
         <ul class="nav pt-5">
-          <li class="nav-item">
+
+          <li class="sidebar-section-title">Main</li>
+
+          <li class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
             <a class="nav-link" href="{% url 'home' %}">
-              <i class="mdi mdi-home menu-icon"></i>
+              <i class="mdi mdi-view-dashboard menu-icon"></i>
               <span class="menu-title">Dashboard</span>
             </a>
           </li>
+
+          <li class="sidebar-section-title">Directory</li>
+
           <li class="nav-item">
-              <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
-                <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                <span class="menu-title">Management</span>
-                <i class="menu-arrow"></i>
-              </a>
-              <div class="collapse" id="ui-basic">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"><a class="nav-link" href="{% url 'user_management' %}">User</a></li>
-                  <li class="nav-item"><a class="nav-link" href="{% url 'computer_management'%}">Computer</a></li>
-                  <li class="nav-item"><a class="nav-link" href="{% url 'group_management' %}">Group</a></li>
-                  <li class="nav-item"><a class="nav-link" href="{% url 'ou_management' %}">OU</a></li>
-                </ul>
-              </div>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'reports_page' %}">
-              <i class="mdi mdi-file menu-icon"></i>
-              <span class="menu-title">Reports</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_hub' %}">
-              <i class="mdi mdi-account menu-icon"></i>
-              <span class="menu-title">Admin</span>
-            </a>
-          </li>
-          <li class="nav-item sidebar-actions">
-            <div class="nav-link">
-              <div class="mt-4">
-                <div class="border-none">
-                  <p class="text-black">Notification</p>
-                </div>
-                <ul class="mt-4 pl-0">
-                  <li>Sign Out</li>
-                </ul>
-              </div>
+            <a class="nav-link" data-toggle="collapse" href="#management-menu" aria-expanded="false" aria-controls="management-menu">
+  <i class="mdi mdi-settings menu-icon"></i>
+  <span class="menu-title">Management</span>
+  <i class="menu-arrow"></i>
+</a>
+
+            <div class="collapse" id="management-menu">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'user_management' %}active-sub-link{% endif %}" href="{% url 'user_management' %}">
+                    <i class="mdi mdi-account-multiple mr-2"></i>
+                    Users
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'computer_management' %}active-sub-link{% endif %}" href="{% url 'computer_management' %}">
+                    <i class="mdi mdi-desktop-classic mr-2"></i>
+                    Computers
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'group_management' %}active-sub-link{% endif %}" href="{% url 'group_management' %}">
+                    <i class="mdi mdi-account-group mr-2"></i>
+                    Groups
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'ou_management' %}active-sub-link{% endif %}" href="{% url 'ou_management' %}">
+                    <i class="mdi mdi-folder-network mr-2"></i>
+                    OUs
+                  </a>
+                </li>
+              </ul>
             </div>
           </li>
+
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#reports-menu" aria-expanded="false" aria-controls="reports-menu">
+              <i class="mdi mdi-file-chart menu-icon"></i>
+              <span class="menu-title">Reports</span>
+              <i class="menu-arrow"></i>
+            </a>
+
+            <div class="collapse" id="reports-menu">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'reports_page' %}active-sub-link{% endif %}" href="{% url 'reports_page' %}">
+                    <i class="mdi mdi-file-document-box-outline mr-2"></i>
+                    Reports Home
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'user_reports_page' %}active-sub-link{% endif %}" href="{% url 'user_reports_page' %}">
+                    <i class="mdi mdi-account-search mr-2"></i>
+                    User Reports
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'computer_reports_page' %}active-sub-link{% endif %}" href="{% url 'computer_reports_page' %}">
+                    <i class="mdi mdi-monitor-dashboard mr-2"></i>
+                    Computer Reports
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'group_reports_page' %}active-sub-link{% endif %}" href="{% url 'group_reports_page' %}">
+                    <i class="mdi mdi-account-group-outline mr-2"></i>
+                    Group Reports
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'ou_reports_page' %}active-sub-link{% endif %}" href="{% url 'ou_reports_page' %}">
+                    <i class="mdi mdi-folder-search mr-2"></i>
+                    OU Reports
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </li>
+
+          <li class="sidebar-section-title">Quick Actions</li>
+
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#quick-actions-menu" aria-expanded="false" aria-controls="quick-actions-menu">
+  <i class="mdi mdi-flash menu-icon"></i>
+  <span class="menu-title">Quick Actions</span>
+  <i class="menu-arrow"></i>
+</a>
+
+            <div class="collapse" id="quick-actions-menu">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'create_single_user' %}active-sub-link{% endif %}" href="{% url 'create_single_user' %}">
+                    <i class="mdi mdi-account-plus mr-2"></i>
+                    Create User
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'reset_password_single_user' %}active-sub-link{% endif %}" href="{% url 'reset_password_single_user' %}">
+                    <i class="mdi mdi-lock-reset mr-2"></i>
+                    Reset Password
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'unlock_single_user' %}active-sub-link{% endif %}" href="{% url 'unlock_single_user' %}">
+                    <i class="mdi mdi-account-key mr-2"></i>
+                    Unlock User
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'create_single_computer' %}active-sub-link{% endif %}" href="{% url 'create_single_computer' %}">
+                    <i class="mdi mdi-desktop-classic mr-2"></i>
+                    Create Computer
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'create_single_group' %}active-sub-link{% endif %}" href="{% url 'create_single_group' %}">
+                    <i class="mdi mdi-account-group mr-2"></i>
+                    Create Group
+                  </a>
+                </li>
+
+                <li class="nav-item">
+                  <a class="nav-link {% if request.resolver_match.url_name == 'create_single_ou' %}active-sub-link{% endif %}" href="{% url 'create_single_ou' %}">
+                    <i class="mdi mdi-folder-plus mr-2"></i>
+                    Create OU
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </li>
+
+          <li class="sidebar-section-title">System</li>
+
+          <li class="nav-item {% if request.resolver_match.url_name == 'admin_hub' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'admin_hub' %}">
+              <i class="mdi mdi-shield-account menu-icon"></i>
+              <span class="menu-title">Admin Hub</span>
+            </a>
+          </li>
+
+          <li class="nav-item {% if request.resolver_match.url_name == 'ldap_setup' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'ldap_setup' %}">
+              <i class="mdi mdi-server-security menu-icon"></i>
+              <span class="menu-title">LDAP Settings</span>
+            </a>
+          </li>
+
         </ul>
       </nav>
 
       <div class="container-fluid page-body-wrapper">
+
+        <!-- Theme Settings Panel -->
         <div id="theme-settings" class="settings-panel">
           <i class="settings-close mdi mdi-close"></i>
+
           <p class="settings-heading">SIDEBAR SKINS</p>
+
           <div class="sidebar-bg-options selected" id="sidebar-default-theme">
-            <div class="img-ss rounded-circle bg-light border mr-3"></div> Default
+            <div class="img-ss rounded-circle bg-light border mr-3"></div>
+            Default
           </div>
+
           <div class="sidebar-bg-options" id="sidebar-dark-theme">
-            <div class="img-ss rounded-circle bg-dark border mr-3"></div> Dark
+            <div class="img-ss rounded-circle bg-dark border mr-3"></div>
+            Dark
           </div>
+
           <p class="settings-heading mt-2">HEADER SKINS</p>
+
           <div class="color-tiles mx-0 px-4">
             <div class="tiles light"></div>
             <div class="tiles dark"></div>
           </div>
         </div>
 
+        <!-- Navbar -->
         <nav class="navbar col-lg-12 col-12 p-lg-0 fixed-top d-flex flex-row">
           <div class="navbar-menu-wrapper d-flex align-items-stretch justify-content-between">
+
             <a class="navbar-brand brand-logo-mini align-self-center d-lg-none" href="{% url 'home' %}">
-              <img src="{% static 'assets/images/logo-mini.svg' %}" alt="logo" />
+              <span class="adx-brand-mini">ADX</span>
             </a>
+
             <button class="navbar-toggler navbar-toggler align-self-center mr-2" type="button" data-toggle="minimize">
               <i class="mdi mdi-menu"></i>
             </button>
-            <ul class="navbar-nav">
-              <li class="nav-item dropdown">
-                <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-toggle="dropdown">
+
+            <div class="d-none d-md-flex flex-column justify-content-center mr-4">
+              <p class="adx-navbar-title">Active Directory Manager</p>
+              <p class="adx-navbar-subtitle">Manage users, computers, groups, OUs, and reports</p>
+            </div>
+
+            <div class="adx-search-box align-self-center d-none d-xl-block">
+              <i class="mdi mdi-magnify"></i>
+              <input
+                type="text"
+                class="form-control"
+                id="globalAdSearch"
+                placeholder="Search users, computers, groups..."
+                autocomplete="off"
+              />
+            </div>
+
+            <ul class="navbar-nav navbar-nav-right ml-lg-auto d-flex align-items-center">
+
+
+              {% if available_domains %}
+                <li class="nav-item mr-3 d-none d-md-flex align-items-center">
+                  <form method="post" action="{% url 'select_domain' %}" class="mb-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <select name="domain_id" class="form-control adx-domain-select" onchange="this.form.submit()">
+                      {% for domain in available_domains %}
+                        <option value="{{ domain.id }}" {% if active_domain and active_domain.id == domain.id %}selected{% endif %}>
+                          {{ domain.name|default:domain.domain_name|default:domain.server_uri }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                </li>
+              {% endif %}
+
+              <!-- AD Alerts / Notifications -->
+              <li class="nav-item dropdown mr-3">
+                <a class="nav-link count-indicator dropdown-toggle position-relative" id="notificationDropdown" href="#" data-toggle="dropdown">
                   <i class="mdi mdi-bell-outline"></i>
-                  <span class="count count-varient1">7</span>
+                  <span class="adx-alert-dot"></span>
                 </a>
-                <div class="dropdown-menu navbar-dropdown navbar-dropdown-large preview-list" aria-labelledby="notificationDropdown">
-                  <h6 class="p-3 mb-0">Notifications</h6>
-                  <a class="dropdown-item preview-item">
+
+                <div class="dropdown-menu navbar-dropdown navbar-dropdown-large preview-list dropdown-menu-right" aria-labelledby="notificationDropdown">
+                  <h6 class="p-3 mb-0">AD Alerts</h6>
+
+                  <a class="dropdown-item preview-item" href="{% url 'user_reports_page' %}?report=locked">
                     <div class="preview-thumbnail">
-                      <img src="{% static 'assets/images/faces/face4.jpg' %}" alt="" class="profile-pic" />
+                      <div class="preview-icon bg-warning">
+                        <i class="mdi mdi-account-lock text-white"></i>
+                      </div>
                     </div>
                     <div class="preview-item-content">
-                      <p class="mb-0"> Dany Miles <span class="text-small text-muted">commented on your photo</span></p>
+                      <p class="mb-0">
+                        Locked user accounts
+                        <span class="text-small text-muted d-block">Review locked accounts</span>
+                      </p>
                     </div>
                   </a>
-                  <a class="dropdown-item preview-item">
+
+                  <a class="dropdown-item preview-item" href="{% url 'user_reports_page' %}?report=disabled">
                     <div class="preview-thumbnail">
-                      <img src="{% static 'assets/images/faces/face3.jpg' %}" alt="" class="profile-pic" />
+                      <div class="preview-icon bg-danger">
+                        <i class="mdi mdi-account-off text-white"></i>
+                      </div>
                     </div>
                     <div class="preview-item-content">
-                      <p class="mb-0"> James <span class="text-small text-muted">posted a photo on your wall</span></p>
+                      <p class="mb-0">
+                        Disabled users
+                        <span class="text-small text-muted d-block">Check inactive or disabled accounts</span>
+                      </p>
                     </div>
                   </a>
-                  <a class="dropdown-item preview-item">
+
+                  <a class="dropdown-item preview-item" href="{% url 'computer_reports_page' %}?report=inactive">
                     <div class="preview-thumbnail">
-                      <img src="{% static 'assets/images/faces/face2.jpg' %}" alt="" class="profile-pic" />
+                      <div class="preview-icon bg-info">
+                        <i class="mdi mdi-desktop-classic text-white"></i>
+                      </div>
                     </div>
                     <div class="preview-item-content">
-                      <p class="mb-0"> Alex <span class="text-small text-muted">just mentioned you in his post</span></p>
+                      <p class="mb-0">
+                        Inactive computers
+                        <span class="text-small text-muted d-block">Review stale computer objects</span>
+                      </p>
                     </div>
                   </a>
+
                   <div class="dropdown-divider"></div>
-                  <p class="p-3 mb-0">View all activities</p>
+
+                  <a class="dropdown-item text-center" href="{% url 'reports_page' %}">
+                    View all reports
+                  </a>
                 </div>
               </li>
-              <li class="nav-item dropdown d-none d-sm-flex">
-                <a class="nav-link count-indicator dropdown-toggle" id="messageDropdown" href="#" data-toggle="dropdown">
-                  <i class="mdi mdi-email-outline"></i>
-                  <span class="count count-varient2">5</span>
-                </a>
-                <div class="dropdown-menu navbar-dropdown navbar-dropdown-large preview-list" aria-labelledby="messageDropdown">
-                  <h6 class="p-3 mb-0">Messages</h6>
-                  <a class="dropdown-item preview-item">
-                    <div class="preview-item-content flex-grow">
-                      <span class="badge badge-pill badge-success">Request</span>
-                      <p class="text-small text-muted ellipsis mb-0"> Suport needed for user123 </p>
-                    </div>
-                    <p class="text-small text-muted align-self-start"> 4:10 PM </p>
-                  </a>
-                  <a class="dropdown-item preview-item">
-                    <div class="preview-item-content flex-grow">
-                      <span class="badge badge-pill badge-warning">Invoices</span>
-                      <p class="text-small text-muted ellipsis mb-0"> Invoice for order is mailed </p>
-                    </div>
-                    <p class="text-small text-muted align-self-start"> 4:10 PM </p>
-                  </a>
-                  <a class="dropdown-item preview-item">
-                    <div class="preview-item-content flex-grow">
-                      <span class="badge badge-pill badge-danger">Projects</span>
-                      <p class="text-small text-muted ellipsis mb-0"> New project will start tomorrow </p>
-                    </div>
-                    <p class="text-small text-muted align-self-start"> 4:10 PM </p>
-                  </a>
-                  <h6 class="p-3 mb-0">See all activity</h6>
-                </div>
-              </li>
-            </ul>
-            <ul class="navbar-nav navbar-nav-right ml-lg-auto">
+
+              <!-- User Profile -->
               <li class="nav-item nav-profile dropdown border-0">
                 <a class="nav-link dropdown-toggle" id="profileDropdown" href="#" data-toggle="dropdown">
-                  <img class="nav-profile-img mr-2" alt="" src="{% static 'assets/images/faces/face1.jpg' %}" />
-                  <span class="profile-name">Henry Klein</span>
+                  <span class="adx-profile-avatar">
+                    {% if request.user.is_authenticated %}
+                      {{ request.user.username|first|upper }}
+                    {% else %}
+                      G
+                    {% endif %}
+                  </span>
+
+                  <span class="profile-name">
+                    {% if request.user.is_authenticated %}
+                      {{ request.user.get_full_name|default:request.user.username }}
+                    {% else %}
+                      Guest
+                    {% endif %}
+                  </span>
                 </a>
-                <div class="dropdown-menu navbar-dropdown w-100" aria-labelledby="profileDropdown">
-                  <a class="dropdown-item" href="#"><i class="mdi mdi-cached mr-2 text-success"></i> Activity Log </a>
-                  <a class="dropdown-item" href="#"><i class="mdi mdi-logout mr-2 text-primary"></i> Signout </a>
+
+                <div class="dropdown-menu navbar-dropdown w-100 dropdown-menu-right" aria-labelledby="profileDropdown">
+                  <a class="dropdown-item" href="{% url 'admin_hub' %}">
+                    <i class="mdi mdi-shield-account mr-2 text-success"></i>
+                    Admin Hub
+                  </a>
+
+                  <a class="dropdown-item" href="{% url 'ldap_setup' %}">
+                    <i class="mdi mdi-server-security mr-2 text-info"></i>
+                    LDAP Settings
+                  </a>
+
+                  <div class="dropdown-divider"></div>
+
+                  <a class="dropdown-item" href="{% url 'logout' %}">
+  <i class="mdi mdi-logout mr-2 text-primary"></i>
+  Sign out
+</a>
                 </div>
               </li>
             </ul>
+
             <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
               <span class="mdi mdi-menu"></span>
             </button>
+
           </div>
         </nav>
 
-        {# PAGE CONTENT SLOT ONLY — do not embed page content here #}
+        <!-- Top Center Django Messages -->
+{% if messages %}
+  <div class="messages-wrapper">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        <i class="mdi mdi-information-outline mr-2"></i>
+        <span>{{ message }}</span>
+
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+        <!-- Page Content -->
         {% block content %}{% endblock content %}
+
       </div>
     </div>
 
+    <!-- Base JS -->
     <script src="{% static 'assets/vendors/js/vendor.bundle.base.js' %}"></script>
-    <!-- Plugin js for this page -->
+
+    <!-- Plugins -->
     <script src="{% static 'assets/vendors/chart.js/Chart.min.js' %}"></script>
     <script src="{% static 'assets/vendors/bootstrap-datepicker/bootstrap-datepicker.min.js' %}"></script>
-    <script src="{% static 'assets/vendors/flot/jquery.flot.js' %}"></script>
-    <script src="{% static 'assets/vendors/flot/jquery.flot.resize.js' %}"></script>
-    <script src="{% static 'assets/vendors/flot/jquery.flot.categories.js' %}"></script>
-    <script src="{% static 'assets/vendors/flot/jquery.flot.fillbetween.js' %}"></script>
-    <script src="{% static 'assets/vendors/flot/jquery.flot.stack.js' %}"></script>
-    <script src="{% static 'assets/vendors/flot/jquery.flot.pie.js' %}"></script>
-    <!-- inject:js -->
+
+    <!-- Template JS -->
     <script src="{% static 'assets/js/off-canvas.js' %}"></script>
     <script src="{% static 'assets/js/hoverable-collapse.js' %}"></script>
     <script src="{% static 'assets/js/misc.js' %}"></script>
-    <script src="{% static 'assets/js/dashboard.js' %}"></script>
-    <!-- End custom js for this page -->
 
-    <!-- Sidebar flyout behavior (unchanged) -->
+    <!-- Sidebar flyout behavior -->
     <script>
       (function () {
-        function isCollapsed() { return document.body.classList.contains('sidebar-icon-only'); }
+        function isCollapsed() {
+          return document.body.classList.contains('sidebar-icon-only');
+        }
+
         document.querySelectorAll('#sidebar .nav-item').forEach(function (item) {
           var trigger = item.querySelector('[data-toggle="collapse"]');
           var menu = item.querySelector('.collapse');
-          if (!trigger || !menu) return;
+
+          if (!trigger || !menu) {
+            return;
+          }
 
           item.addEventListener('mouseenter', function () {
-            if (!isCollapsed()) return;
+            if (!isCollapsed()) {
+              return;
+            }
+
             document.querySelectorAll('#sidebar .collapse.show').forEach(function (open) {
-              if (open !== menu) { open.classList.remove('show'); open.style.top = ''; }
+              if (open !== menu) {
+                open.classList.remove('show');
+                open.style.top = '';
+              }
             });
+
             var rect = item.getBoundingClientRect();
             menu.style.top = Math.round(rect.top + window.scrollY) + 'px';
             menu.classList.add('show');
           });
 
           item.addEventListener('mouseleave', function () {
-            if (!menu.classList.contains('show')) return;
-            menu.classList.remove('show'); menu.style.top = '';
+            if (!menu.classList.contains('show')) {
+              return;
+            }
+
+            menu.classList.remove('show');
+            menu.style.top = '';
           });
 
           trigger.addEventListener('click', function (e) {
-            if (isCollapsed()) { e.preventDefault(); }
+            if (isCollapsed()) {
+              e.preventDefault();
+            }
           });
         });
 
         document.addEventListener('click', function () {
           if (!isCollapsed()) {
             document.querySelectorAll('#sidebar .collapse.show').forEach(function (open) {
-              open.classList.remove('show'); open.style.top = '';
+              open.classList.remove('show');
+              open.style.top = '';
             });
           }
         });
       })();
     </script>
 
-    {# NEW: per-page JS injections (place Admin page scripts here) #}
+    <!-- Basic global AD search redirect helper -->
+    <script>
+      (function () {
+        var searchInput = document.getElementById('globalAdSearch');
+
+        if (!searchInput) {
+          return;
+        }
+
+        searchInput.addEventListener('keydown', function (event) {
+          if (event.key !== 'Enter') {
+            return;
+          }
+
+          var query = searchInput.value.trim();
+
+          if (!query) {
+            return;
+          }
+
+          /*
+            This currently sends the admin to the reports page.
+            Later, we can upgrade this to use your existing AJAX endpoint:
+            {% url 'search_directory_objects_ajax' %}
+          */
+          window.location.href = "{% url 'reports_page' %}?q=" + encodeURIComponent(query);
+        });
+      })();
+    </script>
+
     {% block extra_js %}{% endblock extra_js %}
   </body>
 </html>

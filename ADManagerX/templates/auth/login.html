@@ -1,0 +1,181 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | ADManagerX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'assets/vendors/mdi/css/materialdesignicons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'assets/vendors/css/vendor.bundle.base.css' %}">
+  <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
+  <link rel="shortcut icon" href="{% static 'assets/images/Wolf-Tech-ADX-Favicon.png' %}" />
+
+  <style>
+    body {
+      min-height: 100vh;
+      font-family: "Manrope", sans-serif;
+      background: linear-gradient(135deg, #172554, #1e3a8a, #2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 430px;
+      background: #ffffff;
+      border-radius: 22px;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+      overflow: hidden;
+    }
+
+    .login-header {
+      background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+      color: #ffffff;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .login-header h3 {
+      margin: 0;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .login-header p {
+      margin: 6px 0 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 14px;
+    }
+
+    .login-body {
+      padding: 28px;
+    }
+
+    .form-control {
+      height: 46px;
+      border-radius: 12px;
+      border-color: #dbeafe;
+    }
+
+    .form-control:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.18);
+    }
+
+    .btn-login {
+      height: 46px;
+      border-radius: 12px;
+      background: #2563eb;
+      border-color: #2563eb;
+      font-weight: 800;
+    }
+
+    .btn-login:hover {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+    }
+
+    .alert {
+      border-radius: 12px;
+      border: 0;
+      font-weight: 600;
+    }
+
+    .brand-badge {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.16);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-card">
+
+    <div class="login-header">
+      <div class="brand-badge">ADX</div>
+      <h3>ADManagerX</h3>
+      <p>Sign in to manage Active Directory</p>
+    </div>
+
+    <div class="login-body">
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }} mb-3">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label>Username</label>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">
+                <i class="mdi mdi-account"></i>
+              </span>
+            </div>
+            <input
+              type="text"
+              name="username"
+              class="form-control"
+              placeholder="Enter username"
+              autocomplete="username"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">
+                <i class="mdi mdi-lock"></i>
+              </span>
+            </div>
+            <input
+              type="password"
+              name="password"
+              class="form-control"
+              placeholder="Enter password"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-login">
+          <i class="mdi mdi-login mr-1"></i>
+          Sign In
+        </button>
+      </form>
+
+      <p class="text-muted text-center mt-4 mb-0" style="font-size: 13px;">
+        Use your Django system account.
+      </p>
+    </div>
+  </div>
+
+  <script src="{% static 'assets/vendors/js/vendor.bundle.base.js' %}"></script>
+</body>
+</html>
