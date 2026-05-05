@@ -1,48 +1,107 @@
 {% extends 'layout.html' %}
 {% load static %}
-{% block title %}Reports{% endblock %}
+{% block title %}Reports | ADManagerX{% endblock %}
 
 {% block content %}
-<div class="content-wrapper mt-5 pt-5 bg-white w-auto h-auto">
-    <h4 class="mb-3">Reports</h4>
-    <p class="text-muted">Choose a report type to view detailed information</p>
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm border">
-                <div class="card-body">
-                    <h5 class="card-title">User Reports</h5>
-                    <p class="card-text">Generate and view reports related to user accounts.</p>
-                    <a href="{% url 'user_reports_page' %}" class="btn btn-primary btn-sm">View Reports</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm border">
-                <div class="card-body">
-                    <h5 class="card-title">Computer Reports</h5>
-                    <p class="card-text">Generate and view reports related to computers.</p>
-                    <a href="{% url 'computer_reports_page' %}" class="btn btn-info btn-sm">View Reports</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm border">
-                <div class="card-body">
-                    <h5 class="card-title">Group Reports</h5>
-                    <p class="card-text">Generate and view reports related to AD groups.</p>
-                    <a href="{% url 'group_reports_page' %}" class="btn btn-warning btn-sm">View Reports</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm border">
-                <div class="card-body">
-                    <h5 class="card-title">OU Reports</h5>
-                    <p class="card-text">Generate and view reports related to organizational units.</p>
-                    <a href="{% url 'ou_reports_page' %}" class="btn btn-success btn-sm">View Reports</a>
-                </div>
-            </div>
-        </div>
+<div class="content-wrapper mt-5 pt-4 management-page">
+
+  <!-- Page Hero -->
+  <div class="adx-page-hero d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+      <h3 class="mb-1" style="font-weight:800;">Reports</h3>
+      <p>Generate and export detailed Active Directory reports across all object types.</p>
     </div>
+    <span class="adx-stat-icon mt-2 mt-md-0" style="background:rgba(255,255,255,0.16); color:#ffffff;">
+      <i class="mdi mdi-file-chart"></i>
+    </span>
+  </div>
+
+  <div class="row">
+
+    <!-- User Reports -->
+    <div class="col-md-6 col-xl-3 mb-4">
+      <div class="card adx-card management-action-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <span class="adx-action-icon" style="background:#dbeafe; color:#1d4ed8;">
+              <i class="mdi mdi-account-search"></i>
+            </span>
+            <span style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em;">Users</span>
+          </div>
+          <h5 class="card-title">User Reports</h5>
+          <p class="card-text" style="font-size:13px;">
+            View locked, disabled, and recently created user accounts. Export filtered results.
+          </p>
+          <a href="{% url 'user_reports_page' %}" class="btn btn-primary btn-sm mt-2">
+            <i class="mdi mdi-arrow-right mr-1"></i> View Reports
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Computer Reports -->
+    <div class="col-md-6 col-xl-3 mb-4">
+      <div class="card adx-card management-action-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <span class="adx-action-icon" style="background:#cffafe; color:#0891b2;">
+              <i class="mdi mdi-monitor-dashboard"></i>
+            </span>
+            <span style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em;">Computers</span>
+          </div>
+          <h5 class="card-title">Computer Reports</h5>
+          <p class="card-text" style="font-size:13px;">
+            Identify inactive machines, disabled computers, and domain controllers across all OUs.
+          </p>
+          <a href="{% url 'computer_reports_page' %}" class="btn btn-primary btn-sm mt-2">
+            <i class="mdi mdi-arrow-right mr-1"></i> View Reports
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Group Reports -->
+    <div class="col-md-6 col-xl-3 mb-4">
+      <div class="card adx-card management-action-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <span class="adx-action-icon" style="background:#ede9fe; color:#7c3aed;">
+              <i class="mdi mdi-account-group-outline"></i>
+            </span>
+            <span style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em;">Groups</span>
+          </div>
+          <h5 class="card-title">Group Reports</h5>
+          <p class="card-text" style="font-size:13px;">
+            Inspect security groups, membership counts, and empty or orphaned group objects.
+          </p>
+          <a href="{% url 'group_reports_page' %}" class="btn btn-primary btn-sm mt-2">
+            <i class="mdi mdi-arrow-right mr-1"></i> View Reports
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- OU Reports -->
+    <div class="col-md-6 col-xl-3 mb-4">
+      <div class="card adx-card management-action-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <span class="adx-action-icon" style="background:#d1fae5; color:#059669;">
+              <i class="mdi mdi-folder-search"></i>
+            </span>
+            <span style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em;">OUs</span>
+          </div>
+          <h5 class="card-title">OU Reports</h5>
+          <p class="card-text" style="font-size:13px;">
+            Browse organizational unit structure, object counts, and OU hierarchy details.
+          </p>
+          <a href="{% url 'ou_reports_page' %}" class="btn btn-primary btn-sm mt-2">
+            <i class="mdi mdi-arrow-right mr-1"></i> View Reports
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 {% endblock %}

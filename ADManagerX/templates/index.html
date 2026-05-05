@@ -1,70 +1,583 @@
 {% extends 'layout.html' %}
 {% load static %}
-{% block title %}ADManagerX Dashboard{% endblock %}
+{% block title %}Dashboard | ADManagerX{% endblock %}
+
+{% block extra_head %}
+<style>
+  .dashboard-page { background: #f4f8ff; }
+
+  /* Primary stat cards */
+  .adx-primary-card {
+    border-radius: 18px !important;
+    border: 0 !important;
+    overflow: hidden;
+    box-shadow: 0 14px 36px rgba(30, 64, 175, 0.14) !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .adx-primary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 46px rgba(30, 64, 175, 0.20) !important;
+  }
+
+  .adx-primary-card .card-body {
+    padding: 22px 24px;
+  }
+
+  .adx-primary-card .adx-card-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.82;
+    margin-bottom: 6px;
+  }
+
+  .adx-primary-card h2 {
+    font-size: 36px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+
+  .adx-primary-card .adx-card-sub {
+    font-size: 13px;
+    opacity: 0.78;
+    margin: 0;
+  }
+
+  .adx-primary-card .adx-card-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+
+  /* Secondary status cards */
+  .adx-status-card {
+    border-radius: 16px !important;
+    border: 1px solid rgba(37,99,235,0.09) !important;
+    box-shadow: 0 8px 24px rgba(30,64,175,0.07) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .adx-status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(30,64,175,0.12) !important;
+  }
+
+  .adx-status-card .card-body {
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .adx-status-card .adx-status-num {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+    margin: 0;
+  }
+
+  .adx-status-card .adx-status-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+
+  .adx-status-card .adx-status-sub {
+    font-size: 12px;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  /* Chart cards */
+  .adx-chart-card {
+    border-radius: 18px !important;
+    border: 1px solid rgba(37,99,235,0.09) !important;
+    box-shadow: 0 10px 28px rgba(30,64,175,0.08) !important;
+  }
+
+  .adx-chart-card .card-body {
+    padding: 22px 24px;
+  }
+
+  .adx-chart-card .card-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #172554;
+    margin-bottom: 16px;
+  }
+
+  /* Quick actions */
+  .adx-quick-action {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(37,99,235,0.15);
+    background: #ffffff;
+    color: #1e40af;
+    font-weight: 700;
+    font-size: 13px;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    margin-bottom: 10px;
+  }
+
+  .adx-quick-action:last-child { margin-bottom: 0; }
+
+  .adx-quick-action:hover {
+    background: #eff6ff;
+    border-color: #2563eb;
+    color: #1d4ed8;
+    text-decoration: none;
+    transform: translateX(3px);
+  }
+
+  .adx-quick-action i {
+    font-size: 18px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  /* Security alert badge */
+  .adx-alert-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .adx-alert-badge.warning { background: #fef3c7; color: #92400e; }
+  .adx-alert-badge.danger  { background: #fee2e2; color: #991b1b; }
+  .adx-alert-badge.info    { background: #dbeafe; color: #1e40af; }
+  .adx-alert-badge.success { background: #dcfce7; color: #166534; }
+</style>
+{% endblock extra_head %}
 
 {% block content %}
 <div class="main-panel">
-  <div class="content-wrapper mt-5 pt-5 bg-white">
-    <div class="page-header flex-wrap">
-      <h3 class="mb-0">
-        AD Manager Dashboard
-        <span class="pl-0 h6 pl-sm-2 text-muted d-inline-block">Active Directory overview, health, and quick actions.</span>
-      </h3>
-      <div class="d-flex flex-wrap">
-        <a href="{% url 'create_single_user' %}" class="btn btn-sm ml-2 btn-success"><i class="mdi mdi-account-plus btn-icon-prepend"></i> Add User</a>
-        <a href="{% url 'reports_page' %}" class="btn btn-sm ml-2 btn-primary"><i class="mdi mdi-file-chart btn-icon-prepend"></i> Reports</a>
+  <div class="content-wrapper mt-5 pt-4 dashboard-page">
+
+    <!-- Page Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="mb-1" style="font-weight: 800; color: #172554;">AD Manager Dashboard</h3>
+        <p class="text-muted mb-0" style="font-size:14px;">Active Directory overview, health, and quick actions</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0">
+        <a href="{% url 'create_single_user' %}" class="btn btn-sm btn-success" style="border-radius:10px; font-weight:700;">
+          <i class="mdi mdi-account-plus mr-1"></i> Add User
+        </a>
+        <a href="{% url 'reports_page' %}" class="btn btn-sm btn-primary" style="border-radius:10px; font-weight:700;">
+          <i class="mdi mdi-file-chart mr-1"></i> Reports
+        </a>
       </div>
     </div>
 
+    <!-- Primary stat cards -->
     <div class="row">
-      <div class="col-xl-3 col-md-6 stretch-card grid-margin"><div class="card bg-warning"><div class="card-body px-3 py-4"><div class="d-flex justify-content-between align-items-start"><div class="color-card"><p class="mb-0 color-card-head">Users</p><h2 class="text-white">{{ ad_counts.users|default:0 }}</h2></div><i class="card-icon-indicator mdi mdi-account-multiple bg-inverse-icon-warning"></i></div><h6 class="text-white">Total AD users</h6></div></div></div>
-      <div class="col-xl-3 col-md-6 stretch-card grid-margin"><div class="card bg-danger"><div class="card-body px-3 py-4"><div class="d-flex justify-content-between align-items-start"><div class="color-card"><p class="mb-0 color-card-head">Computers</p><h2 class="text-white">{{ ad_counts.computers|default:0 }}</h2></div><i class="card-icon-indicator mdi mdi-desktop-classic bg-inverse-icon-danger"></i></div><h6 class="text-white">Total AD computers</h6></div></div></div>
-      <div class="col-xl-3 col-md-6 stretch-card grid-margin"><div class="card bg-primary"><div class="card-body px-3 py-4"><div class="d-flex justify-content-between align-items-start"><div class="color-card"><p class="mb-0 color-card-head">Groups</p><h2 class="text-white">{{ ad_counts.groups|default:0 }}</h2></div><i class="card-icon-indicator mdi mdi-account-group bg-inverse-icon-primary"></i></div><h6 class="text-white">Total AD groups</h6></div></div></div>
-      <div class="col-xl-3 col-md-6 stretch-card grid-margin"><div class="card bg-success"><div class="card-body px-3 py-4"><div class="d-flex justify-content-between align-items-start"><div class="color-card"><p class="mb-0 color-card-head">OUs</p><h2 class="text-white">{{ ad_counts.ous|default:0 }}</h2></div><i class="card-icon-indicator mdi mdi-folder-multiple bg-inverse-icon-success"></i></div><h6 class="text-white">Total organizational units</h6></div></div></div>
+      <div class="col-xl-3 col-md-6 stretch-card grid-margin">
+        <div class="card adx-primary-card w-100" style="background: linear-gradient(135deg, #1d4ed8, #3b82f6); color:#fff;">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <p class="adx-card-label">Users</p>
+              <h2>{{ ad_counts.users|default:0 }}</h2>
+              <p class="adx-card-sub">Total AD user accounts</p>
+            </div>
+            <span class="adx-card-icon"><i class="mdi mdi-account-multiple"></i></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 stretch-card grid-margin">
+        <div class="card adx-primary-card w-100" style="background: linear-gradient(135deg, #0891b2, #22d3ee); color:#fff;">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <p class="adx-card-label">Computers</p>
+              <h2>{{ ad_counts.computers|default:0 }}</h2>
+              <p class="adx-card-sub">Total AD computers</p>
+            </div>
+            <span class="adx-card-icon"><i class="mdi mdi-desktop-classic"></i></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 stretch-card grid-margin">
+        <div class="card adx-primary-card w-100" style="background: linear-gradient(135deg, #7c3aed, #a78bfa); color:#fff;">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <p class="adx-card-label">Groups</p>
+              <h2>{{ ad_counts.groups|default:0 }}</h2>
+              <p class="adx-card-sub">Total AD groups</p>
+            </div>
+            <span class="adx-card-icon"><i class="mdi mdi-account-group"></i></span>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 stretch-card grid-margin">
+        <div class="card adx-primary-card w-100" style="background: linear-gradient(135deg, #059669, #34d399); color:#fff;">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <p class="adx-card-label">OUs</p>
+              <h2>{{ ad_counts.ous|default:0 }}</h2>
+              <p class="adx-card-sub">Organizational units</p>
+            </div>
+            <span class="adx-card-icon"><i class="mdi mdi-folder-multiple"></i></span>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- Secondary status cards -->
     <div class="row">
-      <div class="col-xl-3 col-md-6 stretch-card grid-margin"><div class="card"><div class="card-body"><p class="text-muted mb-1">Enabled Users</p><h3>{{ user_status.enabled|default:0 }}</h3><small class="text-success">Active accounts</small></div></div></div>
-      <div class="col-xl-3 col-md-6 stretch-card grid-margin"><div class="card"><div class="card-body"><p class="text-muted mb-1">Disabled Users</p><h3>{{ user_status.disabled|default:0 }}</h3><small class="text-danger">Needs review</small></div></div></div>
-      <div class="col-xl-3 col-md-6 stretch-card grid-margin"><div class="card"><div class="card-body"><p class="text-muted mb-1">Locked Users</p><h3>{{ user_status.locked|default:0 }}</h3><small class="text-warning">May need unlock</small></div></div></div>
-      <div class="col-xl-3 col-md-6 stretch-card grid-margin"><div class="card"><div class="card-body"><p class="text-muted mb-1">Inactive Computers</p><h3>{{ computer_status.inactive|default:0 }}</h3><small class="text-warning">No recent logon</small></div></div></div>
+      <div class="col-xl-3 col-md-6 stretch-card grid-margin">
+        <div class="card adx-status-card w-100">
+          <div class="card-body">
+            <span class="adx-stat-icon adx-stat-icon-sm" style="background:#dcfce7; color:#16a34a;">
+              <i class="mdi mdi-account-check"></i>
+            </span>
+            <div>
+              <p class="adx-status-label">Enabled Users</p>
+              <p class="adx-status-num">{{ user_status.enabled|default:0 }}</p>
+              <p class="adx-status-sub" style="color:#16a34a;">Active accounts</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 stretch-card grid-margin">
+        <div class="card adx-status-card w-100">
+          <div class="card-body">
+            <span class="adx-stat-icon adx-stat-icon-sm" style="background:#fee2e2; color:#dc2626;">
+              <i class="mdi mdi-account-off"></i>
+            </span>
+            <div>
+              <p class="adx-status-label">Disabled Users</p>
+              <p class="adx-status-num">{{ user_status.disabled|default:0 }}</p>
+              <p class="adx-status-sub" style="color:#dc2626;">Needs review</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 stretch-card grid-margin">
+        <div class="card adx-status-card w-100">
+          <div class="card-body">
+            <span class="adx-stat-icon adx-stat-icon-sm" style="background:#fef3c7; color:#d97706;">
+              <i class="mdi mdi-account-lock"></i>
+            </span>
+            <div>
+              <p class="adx-status-label">Locked Users</p>
+              <p class="adx-status-num">{{ user_status.locked|default:0 }}</p>
+              <p class="adx-status-sub" style="color:#d97706;">May need unlock</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6 stretch-card grid-margin">
+        <div class="card adx-status-card w-100">
+          <div class="card-body">
+            <span class="adx-stat-icon adx-stat-icon-sm" style="background:#fef3c7; color:#d97706;">
+              <i class="mdi mdi-desktop-off"></i>
+            </span>
+            <div>
+              <p class="adx-status-label">Inactive Computers</p>
+              <p class="adx-status-num">{{ computer_status.inactive|default:0 }}</p>
+              <p class="adx-status-sub" style="color:#d97706;">No recent logon</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- Charts row -->
     <div class="row">
-      <div class="col-xl-4 col-md-6 grid-margin stretch-card"><div class="card"><div class="card-body"><h4 class="card-title">User Status</h4><canvas id="userStatusChart"></canvas></div></div></div>
-      <div class="col-xl-4 col-md-6 grid-margin stretch-card"><div class="card"><div class="card-body"><h4 class="card-title">Computer Status</h4><canvas id="computerStatusChart"></canvas></div></div></div>
-      <div class="col-xl-4 col-md-12 grid-margin stretch-card"><div class="card"><div class="card-body"><h4 class="card-title">AD Object Distribution</h4><canvas id="objectDistributionChart"></canvas></div></div></div>
+      <div class="col-xl-4 col-md-6 grid-margin stretch-card">
+        <div class="card adx-chart-card w-100">
+          <div class="card-body">
+            <h4 class="card-title">User Status</h4>
+            <canvas id="userStatusChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-4 col-md-6 grid-margin stretch-card">
+        <div class="card adx-chart-card w-100">
+          <div class="card-body">
+            <h4 class="card-title">Computer Status</h4>
+            <canvas id="computerStatusChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-4 col-md-12 grid-margin stretch-card">
+        <div class="card adx-chart-card w-100">
+          <div class="card-body">
+            <h4 class="card-title">AD Object Distribution</h4>
+            <canvas id="objectDistributionChart"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- OU & Groups charts -->
     <div class="row">
-      <div class="col-xl-6 grid-margin stretch-card"><div class="card"><div class="card-body"><h4 class="card-title">Top OUs by Objects</h4><canvas id="topOusChart"></canvas></div></div></div>
-      <div class="col-xl-6 grid-margin stretch-card"><div class="card"><div class="card-body"><h4 class="card-title">Largest Groups</h4><canvas id="topGroupsChart"></canvas></div></div></div>
+      <div class="col-xl-6 grid-margin stretch-card">
+        <div class="card adx-chart-card w-100">
+          <div class="card-body">
+            <h4 class="card-title">Top OUs by Objects</h4>
+            <canvas id="topOusChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-6 grid-margin stretch-card">
+        <div class="card adx-chart-card w-100">
+          <div class="card-body">
+            <h4 class="card-title">Largest Groups</h4>
+            <canvas id="topGroupsChart"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- Security Alerts + Quick Actions -->
     <div class="row">
-      <div class="col-xl-6 grid-margin stretch-card"><div class="card"><div class="card-body"><h4 class="card-title">Security Alerts</h4><div class="table-responsive"><table class="table"><thead class="bg-light"><tr><th>Alert</th><th>Count</th><th>Status</th></tr></thead><tbody>{% for alert in security_alerts %}<tr><td>{{ alert.name }}</td><td>{{ alert.count }}</td><td><span class="badge badge-inverse-{{ alert.level|default:'warning' }}">{{ alert.status|default:'Review' }}</span></td></tr>{% empty %}<tr><td colspan="3" class="text-muted text-center">No security alerts found.</td></tr>{% endfor %}</tbody></table></div></div></div></div>
-      <div class="col-xl-6 grid-margin stretch-card"><div class="card"><div class="card-body"><h4 class="card-title">Quick Actions</h4><div class="row"><div class="col-md-6"><a href="{% url 'create_single_user' %}" class="btn btn-primary btn-block mb-2">Create User</a></div><div class="col-md-6"><a href="{% url 'create_single_computer' %}" class="btn btn-danger btn-block mb-2">Create Computer</a></div><div class="col-md-6"><a href="{% url 'create_single_group' %}" class="btn btn-info btn-block mb-2">Create Group</a></div><div class="col-md-6"><a href="{% url 'create_single_ou' %}" class="btn btn-success btn-block mb-2">Create OU</a></div><div class="col-md-6"><a href="{% url 'reset_password_single_user' %}" class="btn btn-warning btn-block mb-2">Reset Password</a></div><div class="col-md-6"><a href="{% url 'reports_page' %}" class="btn btn-secondary btn-block mb-2">Open Reports</a></div></div></div></div></div>
+      <div class="col-xl-7 grid-margin stretch-card">
+        <div class="card adx-chart-card w-100">
+          <div class="card-body">
+            <h4 class="card-title">Security Alerts</h4>
+            <div class="table-responsive">
+              <table class="table mb-0" style="font-size:14px;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #e2e8f0;">
+                    <th style="color:#475569; font-weight:700; padding-bottom:10px;">Alert</th>
+                    <th style="color:#475569; font-weight:700; padding-bottom:10px;">Count</th>
+                    <th style="color:#475569; font-weight:700; padding-bottom:10px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for alert in security_alerts %}
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                      <td style="padding:12px 8px; font-weight:600; color:#0f172a;">{{ alert.name }}</td>
+                      <td style="padding:12px 8px; font-weight:700; color:#1e40af;">{{ alert.count }}</td>
+                      <td style="padding:12px 8px;">
+                        <span class="adx-alert-badge {{ alert.level|default:'warning' }}">
+                          {{ alert.status|default:'Review' }}
+                        </span>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="3" class="text-center text-muted py-4">
+                        <i class="mdi mdi-shield-check" style="font-size:28px; display:block; margin-bottom:6px; color:#86efac;"></i>
+                        No security alerts — everything looks good.
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-5 grid-margin stretch-card">
+        <div class="card adx-chart-card w-100">
+          <div class="card-body">
+            <h4 class="card-title">Quick Actions</h4>
+            <a href="{% url 'create_single_user' %}" class="adx-quick-action">
+              <i class="mdi mdi-account-plus" style="color:#16a34a;"></i>
+              Create User
+            </a>
+            <a href="{% url 'reset_password_single_user' %}" class="adx-quick-action">
+              <i class="mdi mdi-lock-reset" style="color:#7c3aed;"></i>
+              Reset Password
+            </a>
+            <a href="{% url 'unlock_single_user' %}" class="adx-quick-action">
+              <i class="mdi mdi-account-key" style="color:#0891b2;"></i>
+              Unlock User
+            </a>
+            <a href="{% url 'create_single_computer' %}" class="adx-quick-action">
+              <i class="mdi mdi-desktop-classic" style="color:#d97706;"></i>
+              Create Computer
+            </a>
+            <a href="{% url 'create_single_group' %}" class="adx-quick-action">
+              <i class="mdi mdi-account-group" style="color:#2563eb;"></i>
+              Create Group
+            </a>
+            <a href="{% url 'reports_page' %}" class="adx-quick-action">
+              <i class="mdi mdi-file-chart" style="color:#059669;"></i>
+              Open Reports
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- Recent Users + Computers -->
     <div class="row">
-      <div class="col-xl-6 grid-margin stretch-card"><div class="card"><div class="card-body px-0 overflow-auto"><h4 class="card-title pl-4">Recently Created Users</h4><div class="table-responsive"><table class="table"><thead class="bg-light"><tr><th>Name</th><th>SAM</th><th>OU</th><th>Status</th></tr></thead><tbody>{% for user in recent_users %}<tr><td>{{ user.name }}</td><td>{{ user.sam }}</td><td>{{ user.ou|default:'-' }}</td><td>{% if user.enabled %}<span class="badge badge-inverse-success">Enabled</span>{% else %}<span class="badge badge-inverse-danger">Disabled</span>{% endif %}</td></tr>{% empty %}<tr><td colspan="4" class="text-muted text-center">No recent users found.</td></tr>{% endfor %}</tbody></table></div></div></div></div>
-      <div class="col-xl-6 grid-margin stretch-card"><div class="card"><div class="card-body px-0 overflow-auto"><h4 class="card-title pl-4">Recently Created Computers</h4><div class="table-responsive"><table class="table"><thead class="bg-light"><tr><th>Name</th><th>OU</th><th>OS</th><th>Status</th></tr></thead><tbody>{% for computer in recent_computers %}<tr><td>{{ computer.name }}</td><td>{{ computer.ou|default:'-' }}</td><td>{{ computer.os|default:'Unknown' }}</td><td>{% if computer.enabled %}<span class="badge badge-inverse-success">Enabled</span>{% else %}<span class="badge badge-inverse-danger">Disabled</span>{% endif %}</td></tr>{% empty %}<tr><td colspan="4" class="text-muted text-center">No recent computers found.</td></tr>{% endfor %}</tbody></table></div></div></div></div>
+      <div class="col-xl-6 grid-margin stretch-card">
+        <div class="card adx-chart-card w-100">
+          <div class="card-body px-0 overflow-auto">
+            <h4 class="card-title px-4">Recently Created Users</h4>
+            <div class="table-responsive">
+              <table class="table mb-0" style="font-size:14px;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #e2e8f0;">
+                    <th class="pl-4" style="color:#475569; font-weight:700; padding-bottom:10px;">Name</th>
+                    <th style="color:#475569; font-weight:700; padding-bottom:10px;">SAM</th>
+                    <th style="color:#475569; font-weight:700; padding-bottom:10px;">OU</th>
+                    <th style="color:#475569; font-weight:700; padding-bottom:10px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for user in recent_users %}
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                      <td class="pl-4" style="padding:12px 8px; font-weight:600; color:#0f172a;">{{ user.name }}</td>
+                      <td style="padding:12px 8px; color:#475569;">{{ user.sam }}</td>
+                      <td style="padding:12px 8px; color:#64748b; font-size:13px;">{{ user.ou|default:'-' }}</td>
+                      <td style="padding:12px 8px;">
+                        {% if user.enabled %}
+                          <span class="adx-alert-badge success">Enabled</span>
+                        {% else %}
+                          <span class="adx-alert-badge danger">Disabled</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="4" class="text-center text-muted py-3">No recent users found.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-6 grid-margin stretch-card">
+        <div class="card adx-chart-card w-100">
+          <div class="card-body px-0 overflow-auto">
+            <h4 class="card-title px-4">Recently Created Computers</h4>
+            <div class="table-responsive">
+              <table class="table mb-0" style="font-size:14px;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #e2e8f0;">
+                    <th class="pl-4" style="color:#475569; font-weight:700; padding-bottom:10px;">Name</th>
+                    <th style="color:#475569; font-weight:700; padding-bottom:10px;">OU</th>
+                    <th style="color:#475569; font-weight:700; padding-bottom:10px;">OS</th>
+                    <th style="color:#475569; font-weight:700; padding-bottom:10px;">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for computer in recent_computers %}
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                      <td class="pl-4" style="padding:12px 8px; font-weight:600; color:#0f172a;">{{ computer.name }}</td>
+                      <td style="padding:12px 8px; color:#64748b; font-size:13px;">{{ computer.ou|default:'-' }}</td>
+                      <td style="padding:12px 8px; color:#475569;">{{ computer.os|default:'Unknown' }}</td>
+                      <td style="padding:12px 8px;">
+                        {% if computer.enabled %}
+                          <span class="adx-alert-badge success">Enabled</span>
+                        {% else %}
+                          <span class="adx-alert-badge danger">Disabled</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="4" class="text-center text-muted py-3">No recent computers found.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   const dashboardData = {{ dashboard_json|safe }};
-  function makeChart(id, type, labels, data, options = {}) {
+
+  const CHART_COLORS = {
+    blue:   ['#2563eb', '#0891b2', '#7c3aed', '#059669', '#d97706'],
+    doughnut: {
+      user:     ['#16a34a', '#dc2626', '#d97706'],
+      computer: ['#2563eb', '#dc2626', '#7c3aed'],
+      dist:     ['#2563eb', '#0891b2', '#7c3aed', '#059669'],
+    }
+  };
+
+  const CHART_OPTS = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { position: 'bottom', labels: { padding: 14, font: { family: 'Manrope', size: 12, weight: '700' } } } }
+  };
+
+  function makeChart(id, type, labels, data, extra = {}) {
     const el = document.getElementById(id);
     if (!el) return;
-    new Chart(el, {type: type, data: {labels: labels, datasets: [{label: 'Count', data: data}]}, options: Object.assign({responsive: true, maintainAspectRatio: true}, options)});
+    const colors = extra.colors || CHART_COLORS.blue;
+    new Chart(el, {
+      type,
+      data: {
+        labels,
+        datasets: [{
+          label: 'Count',
+          data,
+          backgroundColor: colors,
+          borderRadius: type === 'bar' ? 8 : undefined,
+          borderWidth: type === 'bar' ? 0 : 2,
+          borderColor: '#ffffff',
+        }]
+      },
+      options: Object.assign({}, CHART_OPTS, extra.options || {})
+    });
   }
-  makeChart('userStatusChart', 'doughnut', ['Enabled', 'Disabled', 'Locked'], [dashboardData.user_status.enabled || 0, dashboardData.user_status.disabled || 0, dashboardData.user_status.locked || 0]);
-  makeChart('computerStatusChart', 'doughnut', ['Enabled', 'Disabled', 'Domain Controllers'], [dashboardData.computer_status.enabled || 0, dashboardData.computer_status.disabled || 0, dashboardData.computer_status.domain_controllers || 0]);
-  makeChart('objectDistributionChart', 'pie', ['Users', 'Computers', 'Groups', 'OUs'], [dashboardData.ad_counts.users || 0, dashboardData.ad_counts.computers || 0, dashboardData.ad_counts.groups || 0, dashboardData.ad_counts.ous || 0]);
-  makeChart('topOusChart', 'bar', (dashboardData.top_ous || []).map(x => x.name), (dashboardData.top_ous || []).map(x => x.count), {indexAxis: 'y'});
-  makeChart('topGroupsChart', 'bar', (dashboardData.top_groups || []).map(x => x.name), (dashboardData.top_groups || []).map(x => x.count));
+
+  makeChart('userStatusChart', 'doughnut',
+    ['Enabled', 'Disabled', 'Locked'],
+    [dashboardData.user_status.enabled || 0, dashboardData.user_status.disabled || 0, dashboardData.user_status.locked || 0],
+    { colors: CHART_COLORS.doughnut.user }
+  );
+
+  makeChart('computerStatusChart', 'doughnut',
+    ['Enabled', 'Disabled', 'Domain Controllers'],
+    [dashboardData.computer_status.enabled || 0, dashboardData.computer_status.disabled || 0, dashboardData.computer_status.domain_controllers || 0],
+    { colors: CHART_COLORS.doughnut.computer }
+  );
+
+  makeChart('objectDistributionChart', 'pie',
+    ['Users', 'Computers', 'Groups', 'OUs'],
+    [dashboardData.ad_counts.users || 0, dashboardData.ad_counts.computers || 0, dashboardData.ad_counts.groups || 0, dashboardData.ad_counts.ous || 0],
+    { colors: CHART_COLORS.doughnut.dist }
+  );
+
+  makeChart('topOusChart', 'bar',
+    (dashboardData.top_ous || []).map(x => x.name),
+    (dashboardData.top_ous || []).map(x => x.count),
+    { options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#f1f5f9' } }, y: { grid: { display: false } } } } }
+  );
+
+  makeChart('topGroupsChart', 'bar',
+    (dashboardData.top_groups || []).map(x => x.name),
+    (dashboardData.top_groups || []).map(x => x.count),
+    { options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } } } }
+  );
 </script>
 {% endblock %}

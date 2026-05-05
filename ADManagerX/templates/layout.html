@@ -398,13 +398,13 @@
       .adx-alert-dot {
         width: 10px;
         height: 10px;
-        background: #93c5fd;
+        background: #ef4444;
         border: 2px solid #ffffff;
         border-radius: 50%;
         position: absolute;
         top: 8px;
         right: 8px;
-        box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.20);
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.20);
       }
 
       .dropdown-menu {
@@ -621,6 +621,234 @@ body.sidebar-icon-only .messages-wrapper {
           margin: 80px 14px -65px 14px;
         }
       }
+    </style>
+
+    <style>
+      /* ── Management Pages ──────────────────────────────────────────── */
+      .management-page {
+        background: #f4f8ff !important;
+        min-height: 100vh;
+        padding-bottom: 40px;
+      }
+
+      .management-page .page-heading,
+      .management-page > h4,
+      .management-page .card-title {
+        color: #172554;
+        font-weight: 800;
+      }
+
+      .management-page > h4 {
+        font-size: 28px;
+        margin-bottom: 6px !important;
+      }
+
+      .management-page > p.text-muted {
+        color: #64748b !important;
+        margin-bottom: 24px;
+      }
+
+      .management-page .card,
+      .management-page .adx-card {
+        border: 1px solid rgba(37, 99, 235, 0.10) !important;
+        border-radius: 18px !important;
+        box-shadow: 0 12px 32px rgba(30, 64, 175, 0.10) !important;
+        overflow: hidden;
+      }
+
+      .management-page .card-body {
+        padding: 24px;
+      }
+
+      .management-page .card-header,
+      .management-page .adx-card-header {
+        background: linear-gradient(135deg, #1e3a8a, #1d4ed8) !important;
+        color: #ffffff !important;
+        border: 0 !important;
+        padding: 18px 24px;
+      }
+
+      .management-page .card-header h4,
+      .management-page .card-header h5,
+      .management-page .card-header i,
+      .management-page .adx-card-header h4,
+      .management-page .adx-card-header h5,
+      .management-page .adx-card-header i {
+        color: #ffffff !important;
+      }
+
+      .management-page .card-description,
+      .management-page .text-muted,
+      .management-page small {
+        color: #64748b !important;
+      }
+
+      .management-page label,
+      .management-page .form-label {
+        color: #0f172a;
+        font-weight: 700;
+      }
+
+      .management-page .form-control,
+      .management-page select,
+      .management-page textarea,
+      .management-page input[type="file"] {
+        border-radius: 12px !important;
+        border: 1px solid #dbeafe !important;
+        min-height: 44px;
+      }
+
+      .management-page .form-control:focus,
+      .management-page select:focus,
+      .management-page textarea:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.16) !important;
+      }
+
+      .management-page .btn {
+        border-radius: 12px !important;
+        font-weight: 700;
+        padding: 9px 16px;
+      }
+
+      .management-page .btn-primary,
+      .management-page .btn-info,
+      .management-page .btn-success,
+      .management-page .btn-warning,
+      .management-page .btn-dark,
+      .management-page .btn-secondary {
+        background: #2563eb !important;
+        border-color: #2563eb !important;
+        color: #ffffff !important;
+      }
+
+      .management-page .btn-primary:hover,
+      .management-page .btn-info:hover,
+      .management-page .btn-success:hover,
+      .management-page .btn-warning:hover,
+      .management-page .btn-dark:hover,
+      .management-page .btn-secondary:hover {
+        background: #1d4ed8 !important;
+        border-color: #1d4ed8 !important;
+        color: #ffffff !important;
+      }
+
+      .management-page .btn-outline-primary,
+      .management-page .btn-outline-info,
+      .management-page .btn-outline-success,
+      .management-page .btn-outline-warning,
+      .management-page .btn-outline-dark,
+      .management-page .btn-outline-secondary,
+      .management-page .adx-sample-btn {
+        border-color: #2563eb !important;
+        color: #1d4ed8 !important;
+        background: #ffffff !important;
+      }
+
+      .management-page .btn-outline-primary:hover,
+      .management-page .btn-outline-info:hover,
+      .management-page .btn-outline-success:hover,
+      .management-page .btn-outline-warning:hover,
+      .management-page .btn-outline-dark:hover,
+      .management-page .btn-outline-secondary:hover,
+      .management-page .adx-sample-btn:hover {
+        background: #eff6ff !important;
+        color: #1e40af !important;
+      }
+
+      .management-page .border.rounded.bg-light,
+      .management-page .bg-light {
+        background: #eff6ff !important;
+        border-color: #dbeafe !important;
+      }
+
+      .management-page .management-action-card {
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        height: 100%;
+      }
+
+      .management-page .management-action-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 42px rgba(30, 64, 175, 0.16) !important;
+      }
+
+      .management-page .bulk-help-box {
+        background: #eff6ff;
+        border: 1px dashed #93c5fd;
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin: 12px 0 18px;
+        color: #1e3a8a;
+        font-weight: 700;
+      }
+
+      /* Action card icon badge */
+      .adx-action-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+      }
+
+      /* Dashboard stat icons */
+      .adx-stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        flex-shrink: 0;
+      }
+
+      .adx-stat-icon-sm {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        font-size: 20px;
+      }
+
+      /* Page hero banner */
+      .adx-page-hero {
+        background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+        color: #ffffff;
+        border-radius: 18px;
+        padding: 22px 28px;
+        margin-bottom: 28px;
+        box-shadow: 0 14px 34px rgba(30, 64, 175, 0.18);
+      }
+
+      .adx-page-hero h3,
+      .adx-page-hero h4,
+      .adx-page-hero p { color: #ffffff; }
+
+      .adx-page-hero p { opacity: 0.88; margin-bottom: 0; }
+
+      /* Footer */
+      .adx-footer {
+        border-top: 1px solid rgba(37, 99, 235, 0.10);
+        padding: 18px 28px;
+        margin-top: 40px;
+        color: #94a3b8;
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .adx-footer a {
+        color: #64748b;
+        text-decoration: none;
+      }
+
+      .adx-footer a:hover { color: #2563eb; }
     </style>
 
     {% block extra_head %}{% endblock extra_head %}
@@ -1015,6 +1243,18 @@ body.sidebar-icon-only .messages-wrapper {
 
         <!-- Page Content -->
         {% block content %}{% endblock content %}
+
+        <!-- Footer -->
+        <footer class="adx-footer">
+          <span>&copy; {% now "Y" %} <strong>ADManagerX</strong> &mdash; Enterprise Active Directory Management</span>
+          <span>
+            <a href="{% url 'admin_hub' %}">Admin Hub</a>
+            &nbsp;&middot;&nbsp;
+            <a href="{% url 'ldap_setup' %}">LDAP Settings</a>
+            &nbsp;&middot;&nbsp;
+            <a href="{% url 'reports_page' %}">Reports</a>
+          </span>
+        </footer>
 
       </div>
     </div>
