@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Login | ADManagerX</title>
+  <title>Sign In | ADManagerX</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,108 +17,314 @@
   <link rel="shortcut icon" href="{% static 'assets/images/Wolf-Tech-ADX-Favicon.png' %}" />
 
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
     body {
       min-height: 100vh;
       font-family: "Manrope", sans-serif;
-      background: linear-gradient(135deg, #172554, #1e3a8a, #2563eb);
+      background: #f4f8ff;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+      align-items: stretch;
+      margin: 0;
     }
 
-    .login-card {
-      width: 100%;
-      max-width: 430px;
-      background: #ffffff;
-      border-radius: 22px;
-      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+    /* ── Left branding panel ── */
+    .login-left {
+      width: 45%;
+      background: linear-gradient(160deg, #172554 0%, #1e3a8a 45%, #1d4ed8 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 48px 52px;
+      position: relative;
       overflow: hidden;
     }
 
-    .login-header {
-      background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
-      color: #ffffff;
-      padding: 28px;
-      text-align: center;
+    .login-left::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 110% 20%, rgba(96,165,250,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at -10% 80%, rgba(37,99,235,0.22) 0%, transparent 70%);
+      pointer-events: none;
     }
 
-    .login-header h3 {
-      margin: 0;
+    .login-brand {
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-brand-badge {
+      width: 60px;
+      height: 60px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
       font-weight: 800;
       color: #ffffff;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.20);
+      border: 1px solid rgba(255,255,255,0.20);
     }
 
-    .login-header p {
-      margin: 6px 0 0;
-      color: rgba(255, 255, 255, 0.82);
+    .login-brand h1 {
+      font-size: 30px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .login-brand p {
+      color: rgba(255,255,255,0.78);
+      font-size: 15px;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .login-features {
+      position: relative;
+      z-index: 1;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .login-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      color: rgba(255,255,255,0.88);
       font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      line-height: 1.5;
     }
 
-    .login-body {
-      padding: 28px;
+    .login-features li:last-child { margin-bottom: 0; }
+
+    .login-feature-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.14);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.15);
     }
 
-    .form-control {
+    .login-left-footer {
+      position: relative;
+      z-index: 1;
+      color: rgba(255,255,255,0.45);
+      font-size: 12px;
+    }
+
+    /* ── Right form panel ── */
+    .login-right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+      background: #ffffff;
+    }
+
+    .login-form-box {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-form-box h2 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .login-form-box .login-subtitle {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    .login-form-box label {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 14px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .login-form-box .form-control {
       height: 46px;
       border-radius: 12px;
-      border-color: #dbeafe;
+      border: 1.5px solid #dbeafe;
+      font-size: 15px;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    .form-control:focus {
+    .login-form-box .form-control:focus {
       border-color: #2563eb;
-      box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.18);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.14);
+    }
+
+    .input-group-text {
+      border-radius: 12px 0 0 12px !important;
+      border: 1.5px solid #dbeafe;
+      border-right: 0 !important;
+      background: #f8fafc;
+      color: #64748b;
+    }
+
+    .input-group .form-control {
+      border-radius: 0 12px 12px 0 !important;
+      border-left: 0 !important;
+    }
+
+    .input-group .form-control:focus {
+      border-color: #2563eb;
+      box-shadow: none;
+    }
+
+    .input-group:focus-within .input-group-text {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
     }
 
     .btn-login {
-      height: 46px;
+      height: 48px;
       border-radius: 12px;
-      background: #2563eb;
-      border-color: #2563eb;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      border: none;
+      color: #ffffff;
       font-weight: 800;
+      font-size: 15px;
+      width: 100%;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 20px rgba(37,99,235,0.30);
     }
 
     .btn-login:hover {
-      background: #1d4ed8;
-      border-color: #1d4ed8;
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(37,99,235,0.36);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
     }
 
     .alert {
       border-radius: 12px;
       border: 0;
       font-weight: 600;
+      padding: 12px 16px;
+      font-size: 14px;
     }
 
-    .brand-badge {
-      width: 58px;
-      height: 58px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.16);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      font-weight: 800;
-      margin-bottom: 12px;
+    .alert-danger  { background: #fee2e2; color: #991b1b; }
+    .alert-success { background: #dcfce7; color: #166534; }
+    .alert-warning { background: #fef3c7; color: #92400e; }
+    .alert-info    { background: #dbeafe; color: #1e40af; }
+
+    .login-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 28px 0;
+    }
+
+    .login-form-footer {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .login-left {
+        width: 100%;
+        padding: 32px 28px;
+        min-height: auto;
+      }
+      .login-features { display: none; }
+      .login-right { padding: 32px 24px; }
     }
   </style>
 </head>
 
 <body>
-  <div class="login-card">
 
-    <div class="login-header">
-      <div class="brand-badge">ADX</div>
-      <h3>ADManagerX</h3>
-      <p>Sign in to manage Active Directory</p>
+  <!-- Left branding panel -->
+  <div class="login-left">
+    <div class="login-brand">
+      <div class="login-brand-badge">ADX</div>
+      <h1>ADManagerX</h1>
+      <p>Enterprise-grade Active Directory management. Manage users, computers, groups, and OUs from one unified platform.</p>
     </div>
 
-    <div class="login-body">
+    <ul class="login-features">
+      <li>
+        <span class="login-feature-icon"><i class="mdi mdi-account-multiple"></i></span>
+        <div>
+          <strong>User Lifecycle Management</strong><br>
+          Create, update, lock, unlock, and reset passwords at scale.
+        </div>
+      </li>
+      <li>
+        <span class="login-feature-icon"><i class="mdi mdi-desktop-classic"></i></span>
+        <div>
+          <strong>Computer & Device Control</strong><br>
+          Manage computer accounts and device objects across all OUs.
+        </div>
+      </li>
+      <li>
+        <span class="login-feature-icon"><i class="mdi mdi-file-chart"></i></span>
+        <div>
+          <strong>Reports & Insights</strong><br>
+          Detailed reports on users, computers, groups, and OUs with alert detection.
+        </div>
+      </li>
+      <li>
+        <span class="login-feature-icon"><i class="mdi mdi-shield-account"></i></span>
+        <div>
+          <strong>Role-Based Access Control</strong><br>
+          Scope-based permissions to restrict helpdesk users per OU or domain.
+        </div>
+      </li>
+    </ul>
+
+    <div class="login-left-footer">
+      &copy; {% now "Y" %} ADManagerX &mdash; All rights reserved
+    </div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="login-right">
+    <div class="login-form-box">
+
+      <h2>Welcome back</h2>
+      <p class="login-subtitle">Sign in to your ADManagerX account to continue.</p>
 
       {% if messages %}
         {% for message in messages %}
           <div class="alert alert-{{ message.tags|default:'info' }} mb-3">
-            {{ message }}
+            <i class="mdi mdi-information-outline mr-2"></i>{{ message }}
           </div>
         {% endfor %}
       {% endif %}
@@ -126,53 +332,54 @@
       <form method="post">
         {% csrf_token %}
 
-        <div class="form-group">
-          <label>Username</label>
+        <div class="form-group mb-3">
+          <label for="id_username">Username</label>
           <div class="input-group">
             <div class="input-group-prepend">
-              <span class="input-group-text">
-                <i class="mdi mdi-account"></i>
-              </span>
+              <span class="input-group-text"><i class="mdi mdi-account-outline"></i></span>
             </div>
             <input
               type="text"
+              id="id_username"
               name="username"
               class="form-control"
-              placeholder="Enter username"
+              placeholder="Enter your username"
               autocomplete="username"
               required
             >
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Password</label>
+        <div class="form-group mb-4">
+          <label for="id_password">Password</label>
           <div class="input-group">
             <div class="input-group-prepend">
-              <span class="input-group-text">
-                <i class="mdi mdi-lock"></i>
-              </span>
+              <span class="input-group-text"><i class="mdi mdi-lock-outline"></i></span>
             </div>
             <input
               type="password"
+              id="id_password"
               name="password"
               class="form-control"
-              placeholder="Enter password"
+              placeholder="Enter your password"
               autocomplete="current-password"
               required
             >
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block btn-login">
-          <i class="mdi mdi-login mr-1"></i>
+        <button type="submit" class="btn-login">
+          <i class="mdi mdi-login"></i>
           Sign In
         </button>
       </form>
 
-      <p class="text-muted text-center mt-4 mb-0" style="font-size: 13px;">
-        Use your Django system account.
+      <div class="login-divider"></div>
+
+      <p class="login-form-footer">
+        Use your ADManagerX system account credentials.
       </p>
+
     </div>
   </div>
 
