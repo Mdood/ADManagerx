@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python -c \"import django; print\\(django.__version__\\)\" 2>&1)"
+    ]
+  }
+}

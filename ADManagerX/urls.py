@@ -65,8 +65,6 @@ urlpatterns = [
     path('group/update/bulk/', update_bulk_groups, name='update_bulk_groups'),
     path('group/delete/single/', delete_single_group, name='delete_single_group'),
     path('group/delete/bulk/', delete_bulk_groups, name='delete_bulk_groups'),
-    path("groups/move/bulk/", move_bulk_groups, name="move_bulk_groups"),
-    path("groups/delete/bulk/", delete_bulk_groups, name="delete_bulk_groups"),
     path('group/move/single/', move_single_group, name='move_single_group'),
     path('group/move/bulk/', move_bulk_groups, name='move_bulk_groups'),
 

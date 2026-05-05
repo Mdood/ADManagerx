@@ -347,6 +347,7 @@
         color: #ffffff !important;
         z-index: 2;
       }
+
       .adx-domain-select {
         max-width: 230px;
         height: 38px;
@@ -358,7 +359,6 @@
         padding: 0 14px;
       }
       .adx-domain-select option { color: #0f172a; }
-
 
       .navbar-nav-right {
         margin-left: auto !important;
@@ -456,64 +456,64 @@
       }
 
       /* Top centered page notifications */
-.messages-wrapper {
-  position: fixed;
-  top: 82px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(760px, calc(100% - 320px));
-  z-index: 3000;
-  pointer-events: none;
-}
+      .messages-wrapper {
+        position: fixed;
+        top: 82px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(760px, calc(100% - 320px));
+        z-index: 3000;
+        pointer-events: none;
+      }
 
-.messages-wrapper .alert {
-  pointer-events: auto;
-  border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
-  border: 1px solid rgba(191, 219, 254, 0.45);
-  padding: 15px 52px 15px 18px;
-  font-weight: 700;
-  text-align: center;
-}
+      .messages-wrapper .alert {
+        pointer-events: auto;
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+        border: 1px solid rgba(191, 219, 254, 0.45);
+        padding: 15px 52px 15px 18px;
+        font-weight: 700;
+        text-align: center;
+      }
 
-.messages-wrapper .alert .close {
-  position: absolute;
-  top: 10px;
-  right: 16px;
-  opacity: 0.8;
-}
+      .messages-wrapper .alert .close {
+        position: absolute;
+        top: 10px;
+        right: 16px;
+        opacity: 0.8;
+      }
 
-.messages-wrapper .alert-success {
-  background: #eff6ff;
-  color: #1e3a8a;
-}
+      .messages-wrapper .alert-success {
+        background: #eff6ff;
+        color: #1e3a8a;
+      }
 
-.messages-wrapper .alert-info {
-  background: #dbeafe;
-  color: #1e40af;
-}
+      .messages-wrapper .alert-info {
+        background: #dbeafe;
+        color: #1e40af;
+      }
 
-.messages-wrapper .alert-warning {
-  background: #fef3c7;
-  color: #92400e;
-}
+      .messages-wrapper .alert-warning {
+        background: #fef3c7;
+        color: #92400e;
+      }
 
-.messages-wrapper .alert-danger,
-.messages-wrapper .alert-error {
-  background: #fee2e2;
-  color: #991b1b;
-}
+      .messages-wrapper .alert-danger,
+      .messages-wrapper .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+      }
 
-body.sidebar-icon-only .messages-wrapper {
-  width: min(760px, calc(100% - 140px));
-}
+      body.sidebar-icon-only .messages-wrapper {
+        width: min(760px, calc(100% - 140px));
+      }
 
-@media (max-width: 991px) {
-  .messages-wrapper {
-    top: 76px;
-    width: calc(100% - 28px);
-  }
-}
+      @media (max-width: 991px) {
+        .messages-wrapper {
+          top: 76px;
+          width: calc(100% - 28px);
+        }
+      }
 
       .alert-success,
       .alert-info,
@@ -829,26 +829,7 @@ body.sidebar-icon-only .messages-wrapper {
 
       .adx-page-hero p { opacity: 0.88; margin-bottom: 0; }
 
-      /* Footer */
-      .adx-footer {
-        border-top: 1px solid rgba(37, 99, 235, 0.10);
-        padding: 18px 28px;
-        margin-top: 40px;
-        color: #94a3b8;
-        font-size: 13px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .adx-footer a {
-        color: #64748b;
-        text-decoration: none;
-      }
-
-      .adx-footer a:hover { color: #2563eb; }
+      
     </style>
 
     {% block extra_head %}{% endblock extra_head %}
@@ -884,10 +865,10 @@ body.sidebar-icon-only .messages-wrapper {
 
           <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#management-menu" aria-expanded="false" aria-controls="management-menu">
-  <i class="mdi mdi-settings menu-icon"></i>
-  <span class="menu-title">Management</span>
-  <i class="menu-arrow"></i>
-</a>
+              <i class="mdi mdi-settings menu-icon"></i>
+              <span class="menu-title">Management</span>
+              <i class="menu-arrow"></i>
+            </a>
 
             <div class="collapse" id="management-menu">
               <ul class="nav flex-column sub-menu">
@@ -897,21 +878,18 @@ body.sidebar-icon-only .messages-wrapper {
                     Users
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'computer_management' %}active-sub-link{% endif %}" href="{% url 'computer_management' %}">
                     <i class="mdi mdi-desktop-classic mr-2"></i>
                     Computers
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'group_management' %}active-sub-link{% endif %}" href="{% url 'group_management' %}">
                     <i class="mdi mdi-account-group mr-2"></i>
                     Groups
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'ou_management' %}active-sub-link{% endif %}" href="{% url 'ou_management' %}">
                     <i class="mdi mdi-folder-network mr-2"></i>
@@ -937,28 +915,24 @@ body.sidebar-icon-only .messages-wrapper {
                     Reports Home
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'user_reports_page' %}active-sub-link{% endif %}" href="{% url 'user_reports_page' %}">
                     <i class="mdi mdi-account-search mr-2"></i>
                     User Reports
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'computer_reports_page' %}active-sub-link{% endif %}" href="{% url 'computer_reports_page' %}">
                     <i class="mdi mdi-monitor-dashboard mr-2"></i>
                     Computer Reports
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'group_reports_page' %}active-sub-link{% endif %}" href="{% url 'group_reports_page' %}">
                     <i class="mdi mdi-account-group-outline mr-2"></i>
                     Group Reports
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'ou_reports_page' %}active-sub-link{% endif %}" href="{% url 'ou_reports_page' %}">
                     <i class="mdi mdi-folder-search mr-2"></i>
@@ -973,10 +947,10 @@ body.sidebar-icon-only .messages-wrapper {
 
           <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#quick-actions-menu" aria-expanded="false" aria-controls="quick-actions-menu">
-  <i class="mdi mdi-flash menu-icon"></i>
-  <span class="menu-title">Quick Actions</span>
-  <i class="menu-arrow"></i>
-</a>
+              <i class="mdi mdi-flash menu-icon"></i>
+              <span class="menu-title">Quick Actions</span>
+              <i class="menu-arrow"></i>
+            </a>
 
             <div class="collapse" id="quick-actions-menu">
               <ul class="nav flex-column sub-menu">
@@ -986,35 +960,30 @@ body.sidebar-icon-only .messages-wrapper {
                     Create User
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'reset_password_single_user' %}active-sub-link{% endif %}" href="{% url 'reset_password_single_user' %}">
                     <i class="mdi mdi-lock-reset mr-2"></i>
                     Reset Password
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'unlock_single_user' %}active-sub-link{% endif %}" href="{% url 'unlock_single_user' %}">
                     <i class="mdi mdi-account-key mr-2"></i>
                     Unlock User
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'create_single_computer' %}active-sub-link{% endif %}" href="{% url 'create_single_computer' %}">
                     <i class="mdi mdi-desktop-classic mr-2"></i>
                     Create Computer
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'create_single_group' %}active-sub-link{% endif %}" href="{% url 'create_single_group' %}">
                     <i class="mdi mdi-account-group mr-2"></i>
                     Create Group
                   </a>
                 </li>
-
                 <li class="nav-item">
                   <a class="nav-link {% if request.resolver_match.url_name == 'create_single_ou' %}active-sub-link{% endif %}" href="{% url 'create_single_ou' %}">
                     <i class="mdi mdi-folder-plus mr-2"></i>
@@ -1049,21 +1018,16 @@ body.sidebar-icon-only .messages-wrapper {
         <!-- Theme Settings Panel -->
         <div id="theme-settings" class="settings-panel">
           <i class="settings-close mdi mdi-close"></i>
-
           <p class="settings-heading">SIDEBAR SKINS</p>
-
           <div class="sidebar-bg-options selected" id="sidebar-default-theme">
             <div class="img-ss rounded-circle bg-light border mr-3"></div>
             Default
           </div>
-
           <div class="sidebar-bg-options" id="sidebar-dark-theme">
             <div class="img-ss rounded-circle bg-dark border mr-3"></div>
             Dark
           </div>
-
           <p class="settings-heading mt-2">HEADER SKINS</p>
-
           <div class="color-tiles mx-0 px-4">
             <div class="tiles light"></div>
             <div class="tiles dark"></div>
@@ -1099,7 +1063,6 @@ body.sidebar-icon-only .messages-wrapper {
             </div>
 
             <ul class="navbar-nav navbar-nav-right ml-lg-auto d-flex align-items-center">
-
 
               {% if available_domains %}
                 <li class="nav-item mr-3 d-none d-md-flex align-items-center">
@@ -1187,7 +1150,6 @@ body.sidebar-icon-only .messages-wrapper {
                       G
                     {% endif %}
                   </span>
-
                   <span class="profile-name">
                     {% if request.user.is_authenticated %}
                       {{ request.user.get_full_name|default:request.user.username }}
@@ -1202,18 +1164,15 @@ body.sidebar-icon-only .messages-wrapper {
                     <i class="mdi mdi-shield-account mr-2 text-success"></i>
                     Admin Hub
                   </a>
-
                   <a class="dropdown-item" href="{% url 'ldap_setup' %}">
                     <i class="mdi mdi-server-security mr-2 text-info"></i>
                     LDAP Settings
                   </a>
-
                   <div class="dropdown-divider"></div>
-
                   <a class="dropdown-item" href="{% url 'logout' %}">
-  <i class="mdi mdi-logout mr-2 text-primary"></i>
-  Sign out
-</a>
+                    <i class="mdi mdi-logout mr-2 text-primary"></i>
+                    Sign out
+                  </a>
                 </div>
               </li>
             </ul>
@@ -1226,35 +1185,22 @@ body.sidebar-icon-only .messages-wrapper {
         </nav>
 
         <!-- Top Center Django Messages -->
-{% if messages %}
-  <div class="messages-wrapper">
-    {% for message in messages %}
-      <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-        <i class="mdi mdi-information-outline mr-2"></i>
-        <span>{{ message }}</span>
-
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
+        {% if messages %}
+          <div class="messages-wrapper">
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                <i class="mdi mdi-information-outline mr-2"></i>
+                <span>{{ message }}</span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
 
         <!-- Page Content -->
         {% block content %}{% endblock content %}
-
-        <!-- Footer -->
-        <footer class="adx-footer">
-          <span>&copy; {% now "Y" %} <strong>ADManagerX</strong> &mdash; Enterprise Active Directory Management</span>
-          <span>
-            <a href="{% url 'admin_hub' %}">Admin Hub</a>
-            &nbsp;&middot;&nbsp;
-            <a href="{% url 'ldap_setup' %}">LDAP Settings</a>
-            &nbsp;&middot;&nbsp;
-            <a href="{% url 'reports_page' %}">Reports</a>
-          </span>
-        </footer>
 
       </div>
     </div>
@@ -1350,11 +1296,6 @@ body.sidebar-icon-only .messages-wrapper {
             return;
           }
 
-          /*
-            This currently sends the admin to the reports page.
-            Later, we can upgrade this to use your existing AJAX endpoint:
-            {% url 'search_directory_objects_ajax' %}
-          */
           window.location.href = "{% url 'reports_page' %}?q=" + encodeURIComponent(query);
         });
       })();

@@ -98,6 +98,7 @@ AUTHENTICATION_BACKENDS = [
 
 # URLs that should not be intercepted by the first-run middleware
 LDAP_SETUP_EXCLUDE_PREFIXES = [
-    '/admin/', '/static/', '/ldap/setup/', '/favicon.ico', '/accounts/login/'
+    '/admin/', '/static/', '/ldap/setup/', '/favicon.ico',
+    '/accounts/login/', '/login/', '/logout/',
 ]
 # --------------------------------------
