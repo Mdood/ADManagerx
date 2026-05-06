@@ -4,7 +4,7 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
 <div class="row">
-    <div class="col-md-10 offset-md-1 grid-margin stretch-card">
+    <div class="col-lg-8 col-md-12 grid-margin stretch-card">
       <div class="card adx-card">
         <div class="card-header adx-card-header d-flex align-items-center">
           <i class="mdi mdi-account-group mr-2" style="font-size: 1.5rem;"></i>
@@ -192,6 +192,22 @@
               <a href="{% url 'group_management' %}" class="btn btn-light px-4">Cancel</a>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 mt-4 mt-lg-0 d-none d-lg-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Choose the correct scope: Global (single domain), Universal (cross-domain), Domain Local (local resource access).</li>
+            <li>Security groups control resource access; Distribution groups are for email distribution only.</li>
+            <li>Use a consistent naming convention (e.g., GRP-TeamName, DL-ListName).</li>
+            <li>Assign users, computers, and nested groups now or update membership later.</li>
+          </ul>
         </div>
       </div>
     </div>

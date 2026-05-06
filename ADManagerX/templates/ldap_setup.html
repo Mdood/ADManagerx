@@ -5,9 +5,49 @@
 
 {% block content %}
 <div class="content-wrapper mt-5 pt-4">
+
+  {% if ldap_settings_list %}
+  <div class="card shadow-sm border mb-4">
+    <div class="card-body">
+      <h5 class="card-title mb-3">Existing LDAP Domains</h5>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Server</th>
+              <th>Base DN</th>
+              <th>Active</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in ldap_settings_list %}
+            <tr {% if current_ldap_setting and current_ldap_setting.id == s.id %}class="table-primary"{% endif %}>
+              <td>{{ s.name|default:s.domain_name|default:"—" }}</td>
+              <td>{{ s.server_uri }}</td>
+              <td>{{ s.base_dn|default:"—" }}</td>
+              <td>{% if s.is_active %}<span class="badge badge-success">Yes</span>{% else %}<span class="badge badge-secondary">No</span>{% endif %}</td>
+              <td>
+                <a href="?domain_id={{ s.id }}" class="btn btn-sm btn-outline-primary">Edit</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-2">
+        <a href="?new=1" class="btn btn-sm btn-success">+ Add New Domain</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="card shadow-sm border">
     <div class="card-body">
-      <h4 class="card-title mb-3">LDAP Configuration</h4>
+      <h4 class="card-title mb-3">
+        {% if current_ldap_setting %}Edit: {{ current_ldap_setting.name|default:current_ldap_setting.server_uri }}{% else %}New LDAP Domain{% endif %}
+      </h4>
       <p class="text-muted mb-4">
         Enter the minimum details needed to connect to Active Directory. You can test the connection before saving.
       </p>
@@ -38,6 +78,9 @@
 
       <form method="post" novalidate>
         {% csrf_token %}
+        {% if current_ldap_setting %}
+        <input type="hidden" name="domain_id" value="{{ current_ldap_setting.id }}">
+        {% endif %}
         <div class="row">
           <div class="col-md-6">
             <div class="form-group">
@@ -138,6 +181,22 @@
             </div>
           </div>
 
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Connection Name</label>
+              {{ form.name }}
+              {% if form.name.errors %}<small class="text-danger">{{ form.name.errors|striptags }}</small>{% endif %}
+              <small class="form-text text-muted">Friendly label shown in the domain selector (e.g. CORP.LOCAL).</small>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group form-check mt-4 pt-2">
+              {{ form.is_active }} <label class="form-check-label">Domain is active (visible to users)</label>
+            </div>
+          </div>
+
+          {{ form.domain_name }}
           {{ form.server_uri }}
           {{ form.bind_dn }}
           {{ form.user_search_base }}

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
 <div class="row">
-    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
+    <div class="col-md-8 grid-margin stretch-card">
       <div class="card adx-card">
         <div class="card-body">
           <h4 class="card-title">Move Single User</h4>
@@ -36,6 +36,22 @@
 
             <button type="submit" class="btn btn-secondary">Move User</button>
           </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 d-none d-md-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Moving a user changes the Group Policies applied to their account.</li>
+            <li>Folder redirection and login scripts tied to the old OU may stop working.</li>
+            <li>The new policies take effect at the user's next logon.</li>
+            <li>Notify the user's manager before moving to a different department OU.</li>
+          </ul>
         </div>
       </div>
     </div>

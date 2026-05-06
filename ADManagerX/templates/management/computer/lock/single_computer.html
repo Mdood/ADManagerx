@@ -4,7 +4,7 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
 <div class="row">
-    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
+    <div class="col-md-8 grid-margin stretch-card">
       <div class="card adx-card">
         <div class="card-body">
           <h4 class="card-title">Lock Single Computer</h4>
@@ -17,6 +17,22 @@
             </div>
             <button type="submit" class="btn btn-dark">Lock Computer</button>
           </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 d-none d-md-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Locking a computer account prevents it from authenticating to the domain.</li>
+            <li>The physical machine is not affected — only the AD object is disabled.</li>
+            <li>Use this for decommissioned or suspicious machines.</li>
+            <li>This action is reversible — use Unlock Computer to restore.</li>
+          </ul>
         </div>
       </div>
     </div>

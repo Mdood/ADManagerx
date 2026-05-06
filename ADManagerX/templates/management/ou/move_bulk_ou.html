@@ -3,22 +3,22 @@
 
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
-<div class="row justify-content-center">
-    <div class="col-lg-8 col-md-10">
+<div class="row">
+    <div class="col-lg-8 col-md-12">
       <div class="card adx-card">
         <div class="card-body p-4">
 
-          <h4 class="card-title text-danger">Bulk Delete OUs</h4>
+          <h4 class="card-title">Bulk Move OUs</h4>
 
           <p class="card-description">
-            Upload an Excel file to delete multiple OUs.
+            Upload an Excel file to move multiple OUs to new parent containers.
           </p>
 
           <small class="text-muted d-block mb-3">
-            Expected columns: ou_dn
+            Expected columns: ou_dn, target_parent_dn
           </small>
 
-          <form method="POST" enctype="multipart/form-data" action="{% url 'delete_bulk_ous' %}">
+          <form method="POST" enctype="multipart/form-data" action="{% url 'move_bulk_ous' %}">
             {% csrf_token %}
 
             <div class="form-group mb-3">
@@ -31,23 +31,34 @@
                      required>
             </div>
 
-            <div class="alert alert-danger">
-              <strong>Dangerous action.</strong> This will permanently delete the listed OUs.
-              Make sure your Excel file contains the correct OU distinguished names.
-            </div>
-
             <div class="mt-3">
-              <button type="submit" class="btn btn-danger px-4 mr-2">
-                Delete OUs
+              <button type="submit" class="btn btn-primary px-4 mr-2">
+                Move OUs
               </button>
 
               <a href="{% static 'samples/bulk_ou_move_sample.xlsx' %}" class="btn btn-outline-primary btn-sm adx-sample-btn mt-3 ml-2" download>
-              <i class="mdi mdi-download mr-1"></i> Download Sample Excel
-            </a>
+                <i class="mdi mdi-download mr-1"></i> Download Sample Excel
+              </a>
             </div>
 
           </form>
 
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 mt-4 mt-lg-0 d-none d-lg-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Required columns: ou_dn (current DN), target_parent_dn.</li>
+            <li>Verify both source and target DNs before running — errors are difficult to reverse.</li>
+            <li>High-impact operation: test with a single OU before bulk execution.</li>
+            <li>Run during a maintenance window to minimise disruption to users.</li>
+          </ul>
         </div>
       </div>
     </div>

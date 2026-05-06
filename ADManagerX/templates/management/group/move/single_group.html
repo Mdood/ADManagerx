@@ -4,7 +4,7 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
 <div class="row">
-    <div class="col-md-6 offset-md-3 grid-margin stretch-card">
+    <div class="col-md-8 grid-margin stretch-card">
       <div class="card adx-card">
         <div class="card-body">
           <h4 class="card-title">Move Single Group</h4>
@@ -35,6 +35,21 @@
               </div>
             <button type="submit" class="btn btn-secondary">Move Group</button>
           </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 d-none d-md-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Moving a group changes its OU but does not affect its SID or membership.</li>
+            <li>OU-level Group Policies may change after the move.</li>
+            <li>Verify the target OU exists and is the correct destination.</li>
+          </ul>
         </div>
       </div>
     </div>

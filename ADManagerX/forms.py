@@ -100,6 +100,7 @@ class LdapSettingsForm(forms.ModelForm):
             "user_domain",
         ]
         widgets = {
+            "domain_name": forms.HiddenInput(),
             "server_uri": forms.HiddenInput(),
             "use_ssl": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "bind_dn": forms.HiddenInput(),

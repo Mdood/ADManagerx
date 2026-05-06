@@ -4,7 +4,7 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
 <div class="row">
-    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
+    <div class="col-md-8 grid-margin stretch-card">
       <div class="card adx-card">
         <div class="card-body">
           <h4 class="card-title">Lock Single User</h4>
@@ -17,6 +17,22 @@
             </div>
             <button type="submit" class="btn btn-dark">Lock User</button>
           </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 d-none d-md-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Locking disables the account — the user cannot log in immediately.</li>
+            <li>This action is reversible; use Unlock User to restore access.</li>
+            <li>Document the reason before locking (security incident, off-boarding, etc.).</li>
+            <li>Locked accounts retain their group memberships and AD attributes.</li>
+          </ul>
         </div>
       </div>
     </div>

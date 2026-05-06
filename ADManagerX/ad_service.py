@@ -1042,7 +1042,7 @@ def list_ous(limit: int = 2000) -> List[dict]:
         base = _resolve_base_dn(conn, cfg)
         conn.search(
             base,
-            "(|(objectClass=organizationalUnit)(objectClass=container))",
+            "(objectClass=organizationalUnit)",
             search_scope=SUBTREE,
             attributes=["ou", "cn", "name", "distinguishedName", "description"],
             size_limit=limit,

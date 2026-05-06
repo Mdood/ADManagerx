@@ -321,32 +321,7 @@
         opacity: 0.85;
       }
 
-      .adx-search-box {
-        min-width: 320px;
-        max-width: 430px;
-        position: relative;
-      }
-
-      .adx-search-box input {
-        border-radius: 999px;
-        padding-left: 42px;
-        height: 42px;
-        background: rgba(255, 255, 255, 0.14) !important;
-        border-color: rgba(255, 255, 255, 0.25) !important;
-        color: #ffffff !important;
-      }
-
-      .adx-search-box input::placeholder {
-        color: rgba(255, 255, 255, 0.75) !important;
-      }
-
-      .adx-search-box i {
-        position: absolute;
-        left: 16px;
-        top: 12px;
-        color: #ffffff !important;
-        z-index: 2;
-      }
+      
 
       .adx-domain-select {
         max-width: 230px;
@@ -613,10 +588,7 @@
           margin-left: 0;
         }
 
-        .adx-search-box {
-          display: none;
-        }
-
+        
         .messages-wrapper {
           margin: 80px 14px -65px 14px;
         }
@@ -829,7 +801,58 @@
 
       .adx-page-hero p { opacity: 0.88; margin-bottom: 0; }
 
-      
+      /* ── Notes Panel ───────────────────────────────────────────── */
+      .adx-notes-panel { position: sticky; top: 80px; }
+
+      .adx-notes-card {
+        background: #ffffff;
+        border: 1px solid #dbeafe;
+        border-radius: 16px;
+        padding: 20px 22px;
+        box-shadow: 0 8px 24px rgba(30, 64, 175, 0.07);
+      }
+
+      .adx-notes-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 12px;
+        margin-bottom: 14px;
+        border-bottom: 1px solid #dbeafe;
+      }
+
+      .adx-notes-header i { font-size: 18px; color: #2563eb; }
+
+      .adx-notes-header span {
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: #1e3a8a;
+      }
+
+      .adx-notes-list { list-style: none; padding: 0; margin: 0; }
+
+      .adx-notes-list li {
+        display: flex;
+        gap: 9px;
+        padding: 7px 0;
+        font-size: 13px;
+        color: #334155;
+        line-height: 1.55;
+        border-bottom: 1px solid #f1f5f9;
+      }
+
+      .adx-notes-list li:last-child { border-bottom: none; padding-bottom: 0; }
+
+      .adx-notes-list li::before {
+        content: "›";
+        color: #2563eb;
+        font-weight: 800;
+        font-size: 15px;
+        flex-shrink: 0;
+        line-height: 1.4;
+      }
     </style>
 
     {% block extra_head %}{% endblock extra_head %}
@@ -1051,16 +1074,7 @@
               <p class="adx-navbar-subtitle">Manage users, computers, groups, OUs, and reports</p>
             </div>
 
-            <div class="adx-search-box align-self-center d-none d-xl-block">
-              <i class="mdi mdi-magnify"></i>
-              <input
-                type="text"
-                class="form-control"
-                id="globalAdSearch"
-                placeholder="Search users, computers, groups..."
-                autocomplete="off"
-              />
-            </div>
+            
 
             <ul class="navbar-nav navbar-nav-right ml-lg-auto d-flex align-items-center">
 
@@ -1277,29 +1291,7 @@
     </script>
 
     <!-- Basic global AD search redirect helper -->
-    <script>
-      (function () {
-        var searchInput = document.getElementById('globalAdSearch');
-
-        if (!searchInput) {
-          return;
-        }
-
-        searchInput.addEventListener('keydown', function (event) {
-          if (event.key !== 'Enter') {
-            return;
-          }
-
-          var query = searchInput.value.trim();
-
-          if (!query) {
-            return;
-          }
-
-          window.location.href = "{% url 'reports_page' %}?q=" + encodeURIComponent(query);
-        });
-      })();
-    </script>
+    
 
     {% block extra_js %}{% endblock extra_js %}
   </body>

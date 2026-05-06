@@ -3,8 +3,8 @@
 
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
-<div class="row justify-content-center">
-    <div class="col-lg-8 col-md-10">
+<div class="row">
+    <div class="col-lg-8 col-md-12">
       <div class="card adx-card">
         <div class="card-header adx-card-header d-flex align-items-center">
           <i class="mdi mdi-desktop-classic mr-2" style="font-size: 1.5rem;"></i>
@@ -17,7 +17,6 @@
 
             <div class="row">
 
-              <!-- Computer Name -->
               <div class="col-md-12 mb-3">
                 <label class="form-label font-weight-bold">
                   Computer Name <span class="text-danger">*</span>
@@ -26,7 +25,6 @@
                        placeholder="Enter computer name" required>
               </div>
 
-              <!-- Target OU (Dropdown) -->
               <div class="col-md-12 mb-3">
                 <label class="form-label font-weight-bold">
                   Target OU <span class="text-danger">*</span>
@@ -35,13 +33,11 @@
                 {% if ous %}
                   <select name="ou_dn" class="form-control" required>
                     <option value="">-- Select OU / Container --</option>
-
                     {% for item in ous %}
                       <option value="{{ item.dn }}">
                         {{ item.ou }} — {{ item.dn }}
                       </option>
                     {% endfor %}
-
                   </select>
                 {% else %}
                   <div class="alert alert-warning mb-0">
@@ -59,7 +55,6 @@
               <button type="submit" class="btn btn-primary px-4 mr-2">
                 <i class="mdi mdi-desktop-mac mr-1"></i> Create Computer
               </button>
-
               <a href="{% url 'computer_management' %}" class="btn btn-light px-4">
                 Cancel
               </a>
@@ -68,6 +63,22 @@
           </form>
         </div>
 
+      </div>
+    </div>
+    <div class="col-lg-4 mt-4 mt-lg-0 d-none d-lg-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Computer names must be 15 characters or fewer (NetBIOS limit).</li>
+            <li>Use a consistent naming convention across your organisation (e.g., PC-DEPT-001).</li>
+            <li>Verify no computer with this name already exists to avoid DNS conflicts.</li>
+            <li>The target OU determines which Group Policies are applied to this computer.</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

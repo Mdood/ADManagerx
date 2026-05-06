@@ -2,9 +2,9 @@
 {% load static %}
 
 {% block content %}
-<div class="content-wrapper mt-5 pt-4 bg-white">
-<div class="row justify-content-center">
-    <div class="col-md-10 col-lg-9 mx-auto">
+<div class="content-wrapper mt-5 pt-4 management-page">
+<div class="row">
+    <div class="col-lg-8 col-md-12">
       <div class="mb-3">
         <h4 class="mb-0">
           Delete Organizational Unit
@@ -121,6 +121,22 @@
         </div>
       </div>
 
+    </div>
+    <div class="col-lg-4 mt-4 mt-lg-0 d-none d-lg-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Deletion is permanent and cannot be undone — verify the correct OU is selected.</li>
+            <li>If the OU has child objects, enable "Also delete child objects" to delete recursively.</li>
+            <li>"Protect from accidental deletion" must be disabled on the OU in AD before it can be deleted.</li>
+            <li>Ensure no GPOs, scripts, or applications depend on this OU before proceeding.</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 </div>

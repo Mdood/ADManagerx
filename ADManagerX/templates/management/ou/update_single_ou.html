@@ -5,9 +5,6 @@
 <div class="content-wrapper mt-5 pt-4 bg-white">
 <div class="d-flex align-items-center mb-3">
     <h4 class="mb-0">Modify Organizational Unit</h4>
-    <a href="{% url 'ou_management' %}" class="btn btn-light btn-sm ml-auto">
-      <i class="mdi mdi-arrow-left"></i> Back to OU Management
-    </a>
   </div>
   <p class="text-muted">Search and select an OU, then update its properties.</p>
 
@@ -59,7 +56,7 @@
             </div>
 
             <div class="d-flex">
-              <button type="submit" class="btn btn-warning">
+              <button type="submit" class="btn btn-primary">
                 <i class="mdi mdi-content-save"></i> Update OU
               </button>
               <a href="{% url 'ou_management' %}" class="btn btn-outline-secondary ml-2">Cancel</a>
@@ -68,27 +65,20 @@
         </div>
       </div>
 
-      <!-- Optional: Move OU (separate action usually, but handy here as a teaser) -->
-      <div class="card border-0 bg-light">
-        <div class="card-body">
-          <h6 class="text-uppercase text-muted mb-2">Moving an OU?</h6>
-          <p class="mb-2">
-            If you also need to move the OU to a different parent, use the dedicated
-            “Move OU” action from the OU Management page for better safeguards and preview.
-          </p>
-          <a href="{% url 'move_ou' %}" class="btn btn-sm btn-dark">Go to Move OU</a>
-        </div>
-      </div>
     </div>
 
-    <div class="col-lg-4 mt-4 mt-lg-0">
-      <div class="card border-0 bg-light">
-        <div class="card-body">
-          <h6 class="text-uppercase text-muted mb-3">Notes</h6>
-          <ul class="pl-3 mb-0">
-            <li>Renaming an OU changes its DN; downstream permissions and links may be affected.</li>
-            <li>Keep “Protect from accidental deletion” enabled unless you are performing maintenance.</li>
-            <li>Moving OUs is a separate workflow with confirmation and preview.</li>
+    <div class="col-lg-4 mt-4 mt-lg-0 d-none d-lg-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Renaming an OU changes its Distinguished Name — all references to the old DN must be updated.</li>
+            <li>Child objects are not directly affected, but their full DN path changes with the parent.</li>
+            <li>Keep “Protect from accidental deletion” enabled unless intentionally unprotecting.</li>
+            <li>To relocate the OU, use the dedicated Move OU workflow for proper safeguards.</li>
           </ul>
         </div>
       </div>
@@ -96,3 +86,5 @@
   </div>
 </div>
 {% endblock %}
+
+

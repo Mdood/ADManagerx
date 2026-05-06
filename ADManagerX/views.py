@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import render as django_render, redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
 import json
 from functools import wraps
@@ -384,6 +385,19 @@ def render(request, template_name, context=None, *args, **kwargs):
     return django_render(request, template_name, context, *args, **kwargs)
 
 
+def _safe_redirect_target(request, candidate: str | None) -> str | None:
+    """Return candidate only when it points back to this host on a safe scheme."""
+    if not candidate:
+        return None
+    if url_has_allowed_host_and_scheme(
+        candidate,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return candidate
+    return None
+
+
 @login_required
 @require_POST
 def select_domain(request):
@@ -395,7 +409,8 @@ def select_domain(request):
         messages.success(request, "Active domain changed.")
     else:
         messages.error(request, "You do not have permission to use that domain.")
-    return redirect(request.POST.get("next") or request.META.get("HTTP_REFERER") or "home")
+    safe_next = _safe_redirect_target(request, request.POST.get("next")) or _safe_redirect_target(request, request.META.get("HTTP_REFERER"))
+    return redirect(safe_next or "home")
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -422,9 +437,9 @@ def login_view(request):
         login(request, user)
         messages.success(request, f"Welcome back, {user.username}.")
 
-        next_url = request.GET.get("next")
-        if next_url:
-            return redirect(next_url)
+        safe_next = _safe_redirect_target(request, request.GET.get("next"))
+        if safe_next:
+            return redirect(safe_next)
 
         return redirect("home")
 
@@ -497,7 +512,7 @@ def ldap_setup(request):
                 request.session["active_ldap_settings_id"] = saved.id
                 set_current_ldap_settings(saved.id)
                 messages.success(request, "LDAP domain settings saved.")
-                return redirect("ldap_setup")
+                return redirect(f"{request.path}?domain_id={saved.id}")
             else:
                 messages.error(request, "Please fix the errors in the form.")
     else:
@@ -1503,23 +1518,32 @@ def move_ou(request):
 @login_required
 @ad_permission_required("ous", "delete", scope_keys=["ou_dn"])
 def delete_ou(request):
+    ou_error = None
+    try:
+        ous = list_ous()
+    except Exception as exc:
+        ous = []
+        ou_error = str(exc)
+
+    ctx = {"ous": ous, "ou_error": ou_error}
+
     if request.method == "POST":
         ou_dn = request.POST.get("ou_dn", "").strip()
         include_children = bool(request.POST.get("include_children"))
         dry_run = bool(request.POST.get("dry_run"))
-        confirm = bool(request.POST.get("confirm_delete"))
+        confirm = bool(request.POST.get("confirm"))
 
         if not ou_dn:
             messages.error(request, "Please provide the OU Distinguished Name (DN).")
-            return render(request, "management/ou/delete_ou.html")
+            return render(request, "management/ou/delete_ou.html", ctx)
 
         if not confirm:
             messages.error(request, "You must confirm that you understand this action is irreversible.")
-            return render(request, "management/ou/delete_ou.html")
+            return render(request, "management/ou/delete_ou.html", ctx)
 
         if dry_run:
             messages.info(request, f"Dry run only. Would delete OU: {ou_dn} (include children: {include_children}).")
-            return render(request, "management/ou/delete_ou.html")
+            return render(request, "management/ou/delete_ou.html", ctx)
 
         try:
             ad_delete_ou(ou_dn)
@@ -1528,7 +1552,7 @@ def delete_ou(request):
         except ADServiceError as e:
             messages.error(request, f"Delete failed: {e}")
 
-    return render(request, "management/ou/delete_ou.html")
+    return render(request, "management/ou/delete_ou.html", ctx)
 
 
 

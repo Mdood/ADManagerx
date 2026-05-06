@@ -4,7 +4,7 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
 <div class="row">
-    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
+    <div class="col-md-8 grid-margin stretch-card">
       <div class="card adx-card">
         <div class="card-body">
           <h4 class="card-title">Update Single Group</h4>
@@ -90,6 +90,22 @@
 
             <button type="submit" class="btn btn-warning">Update Group</button>
           </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 d-none d-md-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Scope changes may be blocked by AD rules (e.g., Global cannot have Universal members).</li>
+            <li>Changing from Security to Distribution revokes resource access for all members immediately.</li>
+            <li>Use "Load Current Members" to review existing membership before making changes.</li>
+            <li>Test scope or type changes on a single group before applying to critical groups.</li>
+          </ul>
         </div>
       </div>
     </div>

@@ -4,12 +4,12 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
 <div class="row">
-    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
+    <div class="col-md-8 grid-margin stretch-card">
       <div class="card adx-card">
         <div class="card-body">
-          <h4 class="card-title">Bulk Group Creation</h4>
-          <p class="card-description">Upload an Excel file to create multiple groups.</p>
-          <small class="text-muted">Expected columns: group_name, description</small>
+          <h4 class="card-title">Bulk Group Move</h4>
+          <p class="card-description">Upload an Excel file to move multiple groups to different OUs.</p>
+          <small class="text-muted">Expected columns: group_name, target_ou</small>
 
           <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
@@ -25,7 +25,22 @@
         </div>
       </div>
     </div>
+    <div class="col-md-4 d-none d-md-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Required columns: group_name, target_ou.</li>
+            <li>The target_ou must be a valid DN — verify before uploading.</li>
+            <li>Group membership and SID are preserved after the move.</li>
+            <li>Use the sample file to verify correct column formatting.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
-

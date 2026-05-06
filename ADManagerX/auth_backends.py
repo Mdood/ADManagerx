@@ -6,6 +6,7 @@ from ldap3 import Server, Connection, ALL, ALL_ATTRIBUTES, Tls, BASE
 import ssl
 
 from .models import LdapSettings
+from .ad_service import _escape_ldap_filter_value
 
 
 class DBLDAPBackend(BaseBackend):
@@ -40,7 +41,9 @@ class DBLDAPBackend(BaseBackend):
             conn.unbind()
             return None
 
-        search_filter = cfg.user_search_filter.format(username=username)
+        search_filter = cfg.user_search_filter.format(
+            username=_escape_ldap_filter_value(username)
+        )
         try:
             conn.search(
                 search_base=search_base,

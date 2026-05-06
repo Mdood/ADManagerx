@@ -4,7 +4,7 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
 <div class="row">
-    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
+    <div class="col-md-8 grid-margin stretch-card">
       <div class="card adx-card">
         <div class="card-body">
           <h4 class="card-title">Bulk Users Update</h4>
@@ -24,6 +24,22 @@
               <i class="mdi mdi-download mr-1"></i> Download Sample Excel
             </a>
           </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 d-none d-md-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Required columns: username (used to look up each account).</li>
+            <li>Empty cells in the Excel are treated as "no change" for that field.</li>
+            <li>Verify all usernames are correct — mismatched entries will be skipped.</li>
+            <li>Use the sample file to check the expected column order and headers.</li>
+          </ul>
         </div>
       </div>
     </div>

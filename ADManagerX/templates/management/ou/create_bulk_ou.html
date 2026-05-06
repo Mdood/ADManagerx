@@ -4,7 +4,7 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
 <div class="row">
-    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
+    <div class="col-md-8 grid-margin stretch-card">
       <div class="card adx-card">
         <div class="card-body">
           <h4 class="card-title">Bulk Create OUs</h4>
@@ -18,12 +18,28 @@
               <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx" required>
             </div>
             <div class="mt-3 d-flex gap-2">
-  <button type="submit" class="btn btn-primary px-4 mr-2">Create OUs</button>
-  <a href="{% static 'samples/bulk_ou_create_sample.xlsx' %}" class="btn btn-outline-primary btn-sm adx-sample-btn mt-3 ml-2" download>
-              <i class="mdi mdi-download mr-1"></i> Download Sample Excel
-            </a>
-</div>
+              <button type="submit" class="btn btn-primary px-4 mr-2">Create OUs</button>
+              <a href="{% static 'samples/bulk_ou_create_sample.xlsx' %}" class="btn btn-outline-primary btn-sm adx-sample-btn mt-3 ml-2" download>
+                <i class="mdi mdi-download mr-1"></i> Download Sample Excel
+              </a>
+            </div>
           </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 d-none d-md-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Required columns: ou_name, parent_ou, description, protect.</li>
+            <li>ou_name must be unique within the specified parent_ou.</li>
+            <li>Set protect=TRUE for all OUs to prevent accidental deletion.</li>
+            <li>Use the sample file to verify correct column headers and formatting.</li>
+          </ul>
         </div>
       </div>
     </div>

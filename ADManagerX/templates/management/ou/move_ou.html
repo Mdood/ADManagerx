@@ -3,8 +3,8 @@
 
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
-<div class="row justify-content-center">
-    <div class="col-lg-8 col-md-10">
+<div class="row">
+    <div class="col-lg-8 col-md-12">
       <div class="card adx-card">
         <div class="card-body p-4">
 
@@ -14,7 +14,6 @@
           <form method="post">
             {% csrf_token %}
 
-            <!-- SOURCE OU -->
             <div class="form-group mb-3">
               <label>Select OU to Move</label>
 
@@ -34,7 +33,6 @@
               {% endif %}
             </div>
 
-            <!-- TARGET OU -->
             <div class="form-group mb-3">
               <label>Target Parent OU</label>
 
@@ -50,7 +48,6 @@
               {% endif %}
             </div>
 
-            <!-- ACTION BUTTONS -->
             <div class="mt-4">
               <button type="submit" class="btn btn-primary px-4 mr-2">
                 Move OU
@@ -66,7 +63,22 @@
         </div>
       </div>
     </div>
+    <div class="col-lg-4 mt-4 mt-lg-0 d-none d-lg-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Moving an OU relocates it and all its child objects to the new parent.</li>
+            <li>GPO links attached to the OU follow it to the new location.</li>
+            <li>Scripts and tools that reference the old DN will break after the move.</li>
+            <li>Inform affected teams and update documentation after completing the move.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
-
 </div>
 {% endblock %}

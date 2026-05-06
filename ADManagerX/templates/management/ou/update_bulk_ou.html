@@ -3,8 +3,8 @@
 
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
-<div class="row justify-content-center">
-    <div class="col-lg-8 col-md-10">
+<div class="row">
+    <div class="col-lg-8 col-md-12">
       <div class="card adx-card">
         <div class="card-body p-4">
 
@@ -37,12 +37,28 @@
               </button>
 
               <a href="{% static 'samples/bulk_ou_update_sample.xlsx' %}" class="btn btn-outline-primary btn-sm adx-sample-btn mt-3 ml-2" download>
-              <i class="mdi mdi-download mr-1"></i> Download Sample Excel
-            </a>
+                <i class="mdi mdi-download mr-1"></i> Download Sample Excel
+              </a>
             </div>
 
           </form>
 
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 mt-4 mt-lg-0 d-none d-lg-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Required columns: ou_dn (current DN) and the fields to update.</li>
+            <li>Verify all ou_dn values are correct — invalid DNs will fail silently.</li>
+            <li>Renaming an OU changes its DN and cascades to all child object paths.</li>
+            <li>Use the sample file to verify correct column headers and formatting.</li>
+          </ul>
         </div>
       </div>
     </div>

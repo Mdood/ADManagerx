@@ -4,7 +4,7 @@
 {% block content %}
 <div class="content-wrapper mt-5 pt-4 management-page">
 <div class="row">
-    <div class="col-md-8 offset-md-2 grid-margin stretch-card">
+    <div class="col-md-8 grid-margin stretch-card">
       <div class="card adx-card">
         <div class="card-body">
           <h4 class="card-title">Unlock Single User</h4>
@@ -21,6 +21,22 @@
             <button type="submit" class="btn btn-success mt-3">Unlock User</button>
           </form>
 
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 d-none d-md-block">
+      <div class="adx-notes-panel">
+        <div class="adx-notes-card">
+          <div class="adx-notes-header">
+            <i class="mdi mdi-lightbulb-on-outline"></i>
+            <span>Notes &amp; Guidelines</span>
+          </div>
+          <ul class="adx-notes-list">
+            <li>Before unlocking, verify why the account was locked (failed login attempts, policy violation).</li>
+            <li>If locked as a security measure, obtain approval before restoring access.</li>
+            <li>Check AD event logs for suspicious activity on the account.</li>
+            <li>Consider requiring a password reset if a credential issue is suspected.</li>
+          </ul>
         </div>
       </div>
     </div>
